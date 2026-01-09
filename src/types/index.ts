@@ -1,5 +1,4 @@
-// Simple types for the application
-// These will be used until we connect to Supabase and generate proper types
+// Application types
 
 export type Tier = 'free' | 'starter' | 'pro' | 'unlimited'
 export type BacklinkSize = 'large' | 'medium' | 'small' | 'minimal'
@@ -26,6 +25,7 @@ export interface Parody {
   status: 'analyzing' | 'generating' | 'complete' | 'failed'
   expires_at: string | null
   backlink_size: BacklinkSize
+  error_message?: string
   created_at: string
 }
 

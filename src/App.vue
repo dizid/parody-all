@@ -1,31 +1,45 @@
 <script setup lang="ts">
 import { RouterView, RouterLink } from 'vue-router'
 import { useAuth } from './composables/useAuth'
+import { useTheme } from './composables/useTheme'
 
-const { user, signOut } = useAuth()
+const { isSignedIn, signOut } = useAuth()
+const { theme, toggleTheme } = useTheme()
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-parody-light to-gray-100">
+  <div class="min-h-screen" style="background-color: var(--color-bg-primary);">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
+    <header class="shadow-sm border-b" style="background-color: var(--color-bg-card); border-color: var(--color-border);">
       <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <RouterLink to="/" class="flex items-center gap-2">
           <span class="text-2xl">🎭</span>
-          <span class="font-bold text-xl text-parody-dark">Parody Everything</span>
+          <span class="font-bold text-xl" style="color: var(--color-text-primary);">Parody Everything</span>
         </RouterLink>
 
         <div class="flex items-center gap-4">
-          <template v-if="user">
+          <!-- Theme Toggle -->
+          <button
+            @click="toggleTheme"
+            class="p-2 rounded-lg transition-colors hover:bg-parody-primary/10"
+            :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+          >
+            <span v-if="theme === 'dark'" class="text-xl">☀️</span>
+            <span v-else class="text-xl">🌙</span>
+          </button>
+
+          <template v-if="isSignedIn">
             <RouterLink
               to="/dashboard"
-              class="text-gray-600 hover:text-parody-primary transition-colors"
+              class="hover:text-parody-primary transition-colors"
+              style="color: var(--color-text-secondary);"
             >
               Dashboard
             </RouterLink>
             <button
               @click="signOut"
-              class="text-gray-600 hover:text-parody-primary transition-colors"
+              class="hover:text-parody-primary transition-colors"
+              style="color: var(--color-text-secondary);"
             >
               Sign Out
             </button>
@@ -48,8 +62,8 @@ const { user, signOut } = useAuth()
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 mt-auto py-8">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-500">
+    <footer class="border-t mt-auto py-8" style="background-color: var(--color-bg-card); border-color: var(--color-border);">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center" style="color: var(--color-text-secondary);">
         <p>🎭 Parody Everything &copy; 2025 - Turn any website into comedy gold</p>
         <p class="text-sm mt-2">This is a parody site generator. All generated content is satirical.</p>
       </div>

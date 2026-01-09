@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b"/>
+      <stop offset="50%" style="stop-color:#312e81"/>
+      <stop offset="100%" style="stop-color:#4c1d95"/>
+    </linearGradient>
+    <!-- Mask gradient -->
+    <linearGradient id="maskGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <!-- Accent gradient -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <!-- Blob blur -->
+    <filter id="blur">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="40"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+
+  <!-- Decorative blobs -->
+  <ellipse cx="150" cy="100" rx="200" ry="150" fill="#7c3aed" opacity="0.3" filter="url(#blur)"/>
+  <ellipse cx="1050" cy="500" rx="250" ry="180" fill="#ec4899" opacity="0.25" filter="url(#blur)"/>
+  <ellipse cx="600" cy="600" rx="300" ry="150" fill="#f59e0b" opacity="0.15" filter="url(#blur)"/>
+
+  <!-- "OFFICIAL ANNOUNCEMENT" banner -->
+  <rect x="300" y="60" width="600" height="40" fill="url(#accentGrad)" rx="4"/>
+  <text x="600" y="88" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" fill="#1f2937" letter-spacing="3">
+    OFFICIAL ANNOUNCEMENT
+  </text>
+
+  <!-- Main headline -->
+  <text x="600" y="200" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="900" fill="#ffffff">
+    We Made a Website That
+  </text>
+  <text x="600" y="265" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="900" fill="url(#accentGrad)">
+    Roasts Other Websites
+  </text>
+
+  <!-- Subtext - self aware -->
+  <text x="600" y="330" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#c4b5fd" font-style="italic">
+    This is not a joke. Okay, it literally is.
+  </text>
+
+  <!-- Theatre masks - centered -->
+  <g transform="translate(480, 360)">
+    <!-- Left mask - laughing -->
+    <g transform="scale(1.3)">
+      <path d="M0 35 Q0 0 35 0 Q70 0 70 35 Q70 55 55 65 Q35 75 15 65 Q0 55 0 35Z"
+            fill="url(#maskGrad)" stroke="#a855f7" stroke-width="2"/>
+      <path d="M15 28 Q22 22 29 28" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M41 28 Q48 22 55 28" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M15 45 Q35 65 55 45 Q35 55 15 45Z" fill="#fff"/>
+      <ellipse cx="12" cy="35" rx="3" ry="4" fill="#60a5fa" opacity="0.8"/>
+    </g>
+    <!-- Right mask - winking -->
+    <g transform="translate(100, 0) scale(1.3)">
+      <path d="M0 35 Q0 0 35 0 Q70 0 70 35 Q70 55 55 65 Q35 75 15 65 Q0 55 0 35Z"
+            fill="url(#maskGrad)" stroke="#a855f7" stroke-width="2"/>
+      <ellipse cx="22" cy="28" rx="8" ry="6" fill="#fff"/>
+      <ellipse cx="22" cy="28" rx="4" ry="4" fill="#1f2937"/>
+      <path d="M41 28 Q48 24 55 28" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M18 48 Q35 58 52 45" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M38 16 Q50 12 58 18" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+    </g>
+  </g>
+
+  <!-- Floating emojis for fun -->
+  <text x="200" y="350" font-size="40" opacity="0.6">&#x1F62D;</text>
+  <text x="1000" y="200" font-size="35" opacity="0.5">&#x1F923;</text>
+  <text x="150" y="500" font-size="30" opacity="0.4">&#x1F480;</text>
+  <text x="1050" y="400" font-size="45" opacity="0.5">&#x1F525;</text>
+
+  <!-- Bottom tagline -->
+  <text x="600" y="540" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#e9d5ff">
+    Turn any website into comedy gold
+  </text>
+
+  <!-- URL -->
+  <rect x="500" y="560" width="200" height="35" fill="rgba(255,255,255,0.1)" rx="17"/>
+  <text x="600" y="583" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="600" fill="#ffffff">
+    parodyhumor.lol
+  </text>
+
+  <!-- Subtle sparkles -->
+  <g fill="#f59e0b" opacity="0.8">
+    <polygon points="350,150 353,158 361,158 355,163 358,171 350,166 342,171 345,163 339,158 347,158"/>
+    <polygon points="850,280 852,286 858,286 854,290 856,296 850,292 844,296 846,290 840,286 846,286" transform="scale(0.8)"/>
+  </g>
+</svg>

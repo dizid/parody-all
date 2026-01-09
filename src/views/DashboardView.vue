@@ -1,39 +1,79 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
-import { supabase } from '../lib/supabase'
+import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
 import type { Parody } from '../types'
 
+interface Profile {
+  id: string
+  tier: string
+  parodies_used: number
+  parodies_limit: number
+  stripe_customer_id?: string
+}
+
 const router = useRouter()
-const { user } = useAuth()
+const route = useRoute()
+const { isSignedIn } = useAuth()
+const { user } = useUser()
+const { getToken } = useClerkAuth()
 
 const parodies = ref<Parody[]>([])
+const profile = ref<Profile | null>(null)
 const loading = ref(true)
 const url = ref('')
 const isGenerating = ref(false)
+const isPurchasing = ref(false)
+const paymentMessage = ref('')
 
-// Redirect if not logged in
-if (!user.value) {
-  router.push('/login')
-}
-
-onMounted(async () => {
-  await fetchParodies()
+// Computed: credits remaining
+const creditsRemaining = computed(() => {
+  if (!profile.value) return 0
+  if (profile.value.parodies_limit === -1) return Infinity
+  return Math.max(0, profile.value.parodies_limit - profile.value.parodies_used)
 })
 
+const canGenerate = computed(() => creditsRemaining.value > 0)
+
+// Check for payment result on mount
+onMounted(() => {
+  const payment = route.query.payment
+  if (payment === 'success') {
+    paymentMessage.value = 'Payment successful! Your credits have been added.'
+    // Clear the query param
+    router.replace({ query: {} })
+    // Refresh profile to get updated credits
+    if (user.value) fetchProfile()
+  } else if (payment === 'cancelled') {
+    paymentMessage.value = 'Payment was cancelled.'
+    router.replace({ query: {} })
+  }
+})
+
+// Redirect if not logged in
+watch(isSignedIn, (signedIn) => {
+  if (signedIn === false) router.push('/login')
+}, { immediate: true })
+
+// Fetch data when user is available
+watch(user, async (newUser) => {
+  if (newUser) {
+    await Promise.all([fetchParodies(), fetchProfile()])
+  }
+}, { immediate: true })
+
 async function fetchParodies() {
-  if (!user.value) return
+  if (!user.value) {
+    loading.value = false
+    return
+  }
 
   try {
-    const { data, error } = await supabase
-      .from('parodies')
-      .select('*')
-      .eq('user_id', user.value.id)
-      .order('created_at', { ascending: false })
-
-    if (error) throw error
-    parodies.value = data || []
+    const response = await fetch(`/.netlify/functions/list-parodies?userId=${user.value.id}`)
+    if (response.ok) {
+      parodies.value = await response.json()
+    }
   } catch (e) {
     console.error('Error fetching parodies:', e)
   } finally {
@@ -41,33 +81,93 @@ async function fetchParodies() {
   }
 }
 
+async function fetchProfile() {
+  if (!user.value) return
+
+  try {
+    const response = await fetch(`/.netlify/functions/get-profile?userId=${user.value.id}`)
+    if (response.ok) {
+      profile.value = await response.json()
+    }
+  } catch (e) {
+    console.error('Error fetching profile:', e)
+  }
+}
+
+async function purchaseCredits() {
+  if (!user.value) return
+
+  isPurchasing.value = true
+  paymentMessage.value = ''
+
+  try {
+    const token = await getToken.value()
+
+    const response = await fetch('/.netlify/functions/create-checkout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        userId: user.value.id,
+        userEmail: user.value.primaryEmailAddress?.emailAddress,
+        priceId: import.meta.env.VITE_STRIPE_PRICE_ID,
+        quantity: 1,
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to create checkout')
+    }
+
+    const { url } = await response.json()
+    window.location.href = url
+  } catch (e: any) {
+    console.error('Error creating checkout:', e)
+    paymentMessage.value = e.message || 'Failed to start checkout. Please try again.'
+  } finally {
+    isPurchasing.value = false
+  }
+}
+
 async function startGeneration() {
   if (!url.value || !user.value) return
 
+  if (!canGenerate.value) {
+    paymentMessage.value = 'You have no credits remaining. Please purchase more to continue.'
+    return
+  }
+
   isGenerating.value = true
+  paymentMessage.value = ''
 
   try {
-    // Create a new parody record
-    const slug = `parody-${Date.now()}`
-    const { data, error } = await supabase
-      .from('parodies')
-      .insert({
-        user_id: user.value.id,
-        slug,
-        original_url: url.value,
-        site_type: 'ecommerce', // Will be detected by AI
-        parody_name: 'Generating...',
-        status: 'analyzing',
-      })
-      .select()
-      .single()
+    const token = await getToken.value()
 
-    if (error) throw error
+    const response = await fetch('/.netlify/functions/generate-parody', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        url: url.value,
+        userId: user.value.id,
+      }),
+    })
 
-    // Navigate to generation progress page
-    router.push(`/generate/${data.id}`)
-  } catch (e) {
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to start generation')
+    }
+
+    const data = await response.json()
+    router.push(`/generate?id=${data.id}`)
+  } catch (e: any) {
     console.error('Error starting generation:', e)
+    paymentMessage.value = e.message || 'Failed to start generation. Please try again.'
   } finally {
     isGenerating.value = false
   }
@@ -93,6 +193,44 @@ function getStatusBadge(status: string) {
   <div class="max-w-6xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-8">Dashboard</h1>
 
+    <!-- Payment Message -->
+    <div
+      v-if="paymentMessage"
+      :class="[
+        'rounded-xl p-4 mb-6',
+        paymentMessage.includes('successful') ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+      ]"
+    >
+      {{ paymentMessage }}
+    </div>
+
+    <!-- User Info -->
+    <div v-if="user" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl p-6 mb-8">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <img
+            v-if="user.imageUrl"
+            :src="user.imageUrl"
+            :alt="user.fullName || 'User'"
+            class="w-12 h-12 rounded-full"
+          />
+          <div>
+            <p class="font-semibold text-lg">{{ user.fullName || user.primaryEmailAddress?.emailAddress }}</p>
+            <p class="text-white/80 text-sm">
+              {{ profile?.tier === 'unlimited' ? 'Unlimited' : `${creditsRemaining} credit${creditsRemaining === 1 ? '' : 's'} remaining` }}
+            </p>
+          </div>
+        </div>
+        <button
+          @click="purchaseCredits"
+          :disabled="isPurchasing"
+          class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50"
+        >
+          {{ isPurchasing ? 'Loading...' : 'Buy Credits' }}
+        </button>
+      </div>
+    </div>
+
     <!-- Create New Parody -->
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
       <h2 class="text-xl font-semibold mb-4">Create New Parody</h2>
@@ -101,14 +239,14 @@ function getStatusBadge(status: string) {
           v-model="url"
           type="text"
           placeholder="Enter a URL to parody (e.g., amazon.com)"
-          class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-parody-primary"
+          class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
         <button
           type="submit"
-          :disabled="isGenerating || !url"
-          class="bg-parody-primary text-white px-6 py-3 rounded-xl font-semibold hover:bg-parody-primary/90 disabled:opacity-50"
+          :disabled="isGenerating || !url || !canGenerate"
+          class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-50 transition-all"
         >
-          {{ isGenerating ? 'Starting...' : 'Generate ($2.50)' }}
+          {{ isGenerating ? 'Starting...' : canGenerate ? 'Generate Parody' : 'No Credits' }}
         </button>
       </form>
     </div>
@@ -124,13 +262,14 @@ function getStatusBadge(status: string) {
       <div v-else-if="parodies.length === 0" class="text-center py-8 text-gray-500">
         <p class="text-4xl mb-4">🎭</p>
         <p>No parodies yet. Create your first one above!</p>
+        <p class="text-sm mt-2">Your first parody is FREE!</p>
       </div>
 
       <div v-else class="space-y-4">
         <div
           v-for="parody in parodies"
           :key="parody.id"
-          class="border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-parody-primary/30 transition-colors"
+          class="border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-purple-300 transition-colors"
         >
           <div>
             <h3 class="font-semibold">{{ parody.parody_name }}</h3>
@@ -149,33 +288,15 @@ function getStatusBadge(status: string) {
               {{ getStatusBadge(parody.status).text }}
             </span>
             <RouterLink
-              v-if="parody.status === 'complete'"
+              v-if="parody.status === 'complete' && parody.slug"
               :to="`/p/${parody.slug}`"
-              class="text-parody-primary hover:underline"
+              class="text-purple-600 hover:underline"
             >
               View →
-            </RouterLink>
-            <RouterLink
-              v-else-if="parody.status === 'generating' || parody.status === 'analyzing'"
-              :to="`/generate/${parody.id}`"
-              class="text-parody-primary hover:underline"
-            >
-              Progress →
             </RouterLink>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Billing Section -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mt-8">
-      <h2 class="text-xl font-semibold mb-4">Billing</h2>
-      <p class="text-gray-600 mb-4">
-        You're on usage-based billing. Each parody costs $2.50.
-      </p>
-      <p class="text-sm text-gray-500">
-        Parodies generated: {{ parodies.filter(p => p.status === 'complete').length }}
-      </p>
     </div>
   </div>
 </template>

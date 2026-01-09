@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="fav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Single winking mask - simplified for small sizes -->
+  <g transform="translate(1, 2)">
+    <!-- Mask shape -->
+    <path d="M0 14 Q0 0 15 0 Q30 0 30 14 Q30 22 24 26 Q15 31 6 26 Q0 22 0 14Z"
+          fill="url(#fav)" stroke="#5b21b6" stroke-width="1.5"/>
+
+    <!-- Left eye - open -->
+    <ellipse cx="10" cy="12" rx="3.5" ry="2.5" fill="#fff"/>
+    <ellipse cx="10" cy="12" rx="1.8" ry="1.8" fill="#1f2937"/>
+
+    <!-- Right eye - WINK -->
+    <path d="M17 12 Q20 10 23 12" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Smirky smile -->
+    <path d="M8 19 Q15 24 22 18" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Raised eyebrow -->
+    <path d="M16 7 Q21 4 25 7" stroke="#5b21b6" stroke-width="1.5" fill="none"/>
+  </g>
+</svg>

@@ -5,7 +5,7 @@ import { useAuth } from '../composables/useAuth'
 import { PRICING_TIERS, type AnalysisResult, type SiteType } from '../types'
 
 const router = useRouter()
-const { user } = useAuth()
+const { isSignedIn } = useAuth()
 
 const url = ref('')
 const isAnalyzing = ref(false)
@@ -84,7 +84,7 @@ async function analyzeUrl() {
 }
 
 function generateParody() {
-  if (!user.value) {
+  if (!isSignedIn.value) {
     router.push('/login')
     return
   }
@@ -225,7 +225,7 @@ function scrollToTop() {
               </div>
               <div class="flex items-center gap-3 text-gray-600">
                 <span class="text-green-500">✓</span>
-                <span>{{ user ? 'Ready in ~30 seconds' : 'Sign in to generate' }}</span>
+                <span>{{ isSignedIn ? 'Ready in ~30 seconds' : 'Sign in to generate' }}</span>
               </div>
             </div>
 
@@ -234,7 +234,7 @@ function scrollToTop() {
                 @click="generateParody"
                 class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300"
               >
-                {{ user ? '🚀 Generate Now' : '🔐 Sign In to Generate' }}
+                {{ isSignedIn ? '🚀 Generate Now' : '🔐 Sign In to Generate' }}
               </button>
               <button
                 @click="analysisResult = null; url = ''"
@@ -249,16 +249,16 @@ function scrollToTop() {
     </Transition>
 
     <!-- Example Parodies Section -->
-    <section class="py-24 bg-white">
+    <section class="py-24" style="background-color: var(--color-bg-secondary);">
       <div class="max-w-6xl mx-auto px-4">
         <div class="text-center mb-16">
-          <span class="inline-block bg-purple-100 text-purple-700 px-4 py-1 rounded-full text-sm font-semibold mb-4">
+          <span class="inline-block bg-purple-500/20 text-purple-400 px-4 py-1 rounded-full text-sm font-semibold mb-4">
             EXAMPLES
           </span>
-          <h2 class="text-4xl md:text-5xl font-black text-gray-900 mb-4">
+          <h2 class="text-4xl md:text-5xl font-black mb-4" style="color: var(--color-text-primary);">
             Parody Hall of Fame
           </h2>
-          <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p class="text-xl max-w-2xl mx-auto" style="color: var(--color-text-secondary);">
             See what our AI creates. These are just previews - yours will be even better!
           </p>
         </div>
@@ -267,14 +267,15 @@ function scrollToTop() {
           <div
             v-for="example in exampleParodies"
             :key="example.original"
-            class="group relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer border border-gray-200"
+            class="group relative rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer border"
+            style="background-color: var(--color-bg-card); border-color: var(--color-border);"
           >
-            <div class="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-pink-600/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-pink-600/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="relative">
               <span class="text-4xl mb-4 block">{{ example.icon }}</span>
-              <p class="text-sm text-gray-500 line-through mb-1">{{ example.original }}</p>
-              <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ example.parody }}</h3>
-              <p class="text-gray-600 text-sm italic">"{{ example.tagline }}"</p>
+              <p class="text-sm line-through mb-1" style="color: var(--color-text-secondary);">{{ example.original }}</p>
+              <h3 class="text-2xl font-bold mb-2" style="color: var(--color-text-primary);">{{ example.parody }}</h3>
+              <p class="text-sm italic" style="color: var(--color-text-secondary);">"{{ example.tagline }}"</p>
             </div>
           </div>
         </div>
@@ -282,13 +283,13 @@ function scrollToTop() {
     </section>
 
     <!-- How It Works -->
-    <section class="py-24 bg-gradient-to-b from-gray-50 to-white">
+    <section class="py-24" style="background-color: var(--color-bg-primary);">
       <div class="max-w-6xl mx-auto px-4">
         <div class="text-center mb-16">
-          <span class="inline-block bg-yellow-100 text-yellow-700 px-4 py-1 rounded-full text-sm font-semibold mb-4">
+          <span class="inline-block bg-yellow-500/20 text-yellow-400 px-4 py-1 rounded-full text-sm font-semibold mb-4">
             HOW IT WORKS
           </span>
-          <h2 class="text-4xl md:text-5xl font-black text-gray-900 mb-4">
+          <h2 class="text-4xl md:text-5xl font-black mb-4" style="color: var(--color-text-primary);">
             3 Steps to Comedy
           </h2>
         </div>
@@ -298,22 +299,22 @@ function scrollToTop() {
             <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-lg shadow-purple-500/30">
               1️⃣
             </div>
-            <h3 class="text-xl font-bold mb-2">Paste URL</h3>
-            <p class="text-gray-600">Enter any website URL you want to parody</p>
+            <h3 class="text-xl font-bold mb-2" style="color: var(--color-text-primary);">Paste URL</h3>
+            <p style="color: var(--color-text-secondary);">Enter any website URL you want to parody</p>
           </div>
           <div class="text-center">
             <div class="w-20 h-20 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-lg shadow-yellow-500/30">
               2️⃣
             </div>
-            <h3 class="text-xl font-bold mb-2">AI Magic</h3>
-            <p class="text-gray-600">Our AI generates hilarious satirical content</p>
+            <h3 class="text-xl font-bold mb-2" style="color: var(--color-text-primary);">AI Magic</h3>
+            <p style="color: var(--color-text-secondary);">Our AI generates hilarious satirical content</p>
           </div>
           <div class="text-center">
             <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-lg shadow-green-500/30">
               3️⃣
             </div>
-            <h3 class="text-xl font-bold mb-2">Share & Laugh</h3>
-            <p class="text-gray-600">Get a unique link to share your parody</p>
+            <h3 class="text-xl font-bold mb-2" style="color: var(--color-text-primary);">Share & Laugh</h3>
+            <p style="color: var(--color-text-secondary);">Get a unique link to share your parody</p>
           </div>
         </div>
       </div>
@@ -376,13 +377,13 @@ function scrollToTop() {
     </section>
 
     <!-- CTA Section -->
-    <section class="py-24 bg-white">
+    <section class="py-24" style="background-color: var(--color-bg-secondary);">
       <div class="max-w-4xl mx-auto px-4 text-center">
         <div class="text-6xl mb-6">🎭</div>
-        <h2 class="text-4xl md:text-5xl font-black text-gray-900 mb-6">
+        <h2 class="text-4xl md:text-5xl font-black mb-6" style="color: var(--color-text-primary);">
           Ready to Make Someone Laugh?
         </h2>
-        <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        <p class="text-xl mb-8 max-w-2xl mx-auto" style="color: var(--color-text-secondary);">
           Join thousands of creators who are turning boring websites into comedy gold.
         </p>
         <button

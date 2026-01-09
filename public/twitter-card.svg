@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b"/>
+      <stop offset="100%" style="stop-color:#4c1d95"/>
+    </linearGradient>
+    <linearGradient id="maskGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <filter id="blur">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="30"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="600" fill="url(#bgGrad)"/>
+
+  <!-- Decorative blobs -->
+  <ellipse cx="100" cy="100" rx="150" ry="120" fill="#7c3aed" opacity="0.2" filter="url(#blur)"/>
+  <ellipse cx="1100" cy="500" rx="180" ry="140" fill="#ec4899" opacity="0.2" filter="url(#blur)"/>
+
+  <!-- Fake tweet card -->
+  <rect x="150" y="80" width="900" height="440" fill="#ffffff" rx="20"/>
+
+  <!-- Profile section -->
+  <g transform="translate(190, 120)">
+    <!-- Avatar with mask -->
+    <circle cx="30" cy="30" r="28" fill="url(#maskGrad)"/>
+    <!-- Mini winking mask in avatar -->
+    <g transform="translate(10, 12) scale(0.6)">
+      <path d="M0 14 Q0 0 15 0 Q30 0 30 14 Q30 22 24 26 Q15 31 6 26 Q0 22 0 14Z" fill="#fff" opacity="0.9"/>
+      <ellipse cx="10" cy="12" rx="2.5" ry="2" fill="#4c1d95"/>
+      <path d="M17 12 Q20 10 23 12" stroke="#4c1d95" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M8 19 Q15 23 22 18" stroke="#4c1d95" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- Name and handle -->
+    <text x="75" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" fill="#0f172a">
+      Parody Everything
+    </text>
+    <!-- Verified badge crossed out -->
+    <g transform="translate(245, 8)">
+      <circle cx="10" cy="10" r="10" fill="#1d9bf0"/>
+      <path d="M6 10 L9 13 L14 7" stroke="#fff" stroke-width="2" fill="none"/>
+      <!-- Strike through -->
+      <line x1="0" y1="20" x2="20" y2="0" stroke="#ef4444" stroke-width="2"/>
+    </g>
+    <text x="275" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#ef4444" font-weight="600">lol</text>
+
+    <text x="75" y="45" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#64748b">
+      @ParodyEverything
+    </text>
+  </g>
+
+  <!-- Tweet content -->
+  <text x="190" y="230" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#0f172a">
+    We turn websites into comedy.
+  </text>
+  <text x="190" y="275" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#0f172a">
+    Yes, we're aware of the irony of
+  </text>
+  <text x="190" y="320" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#0f172a">
+    having a website.
+  </text>
+
+  <!-- Timestamp -->
+  <text x="190" y="370" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#64748b">
+    4:20 PM  &#183;  Apr 1, 2025
+  </text>
+
+  <!-- Divider -->
+  <line x1="190" y1="395" x2="1010" y2="395" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- Engagement stats -->
+  <g transform="translate(190, 420)">
+    <!-- Retweets -->
+    <text font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#0f172a" font-weight="700">
+      42.0K
+    </text>
+    <text x="55" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#64748b">
+      Retweets
+    </text>
+
+    <!-- Quotes -->
+    <text x="180" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#0f172a" font-weight="700">
+      6.9K
+    </text>
+    <text x="225" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#64748b">
+      Quotes
+    </text>
+
+    <!-- Likes -->
+    <text x="340" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#0f172a" font-weight="700">
+      69K
+    </text>
+    <text x="380" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#64748b">
+      Likes
+    </text>
+
+    <!-- Views -->
+    <text x="480" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#0f172a" font-weight="700">
+      4.2M
+    </text>
+    <text x="530" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#64748b">
+      Views
+    </text>
+  </g>
+
+  <!-- Divider -->
+  <line x1="190" y1="460" x2="1010" y2="460" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- Action icons -->
+  <g transform="translate(190, 480)" fill="#64748b">
+    <!-- Reply -->
+    <path d="M12 3c-5.5 0-10 4.5-10 10v1l5-4h5c2.8 0 5-2.2 5-5s-2.2-5-5-5z" transform="scale(1.2)"/>
+    <!-- Retweet -->
+    <path d="M23 16l-5-5v3h-8v-3l-5 5 5 5v-3h8v3l5-5z" transform="translate(120, 0) scale(1.2)"/>
+    <!-- Like -->
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" transform="translate(240, 0) scale(1.2)"/>
+    <!-- Bookmark -->
+    <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z" transform="translate(360, 0) scale(1.2)"/>
+    <!-- Share -->
+    <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" transform="translate(480, 0) scale(1.2)"/>
+  </g>
+
+  <!-- URL badge at bottom right of card -->
+  <rect x="820" y="480" width="180" height="30" fill="url(#maskGrad)" rx="15"/>
+  <text x="910" y="500" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#ffffff">
+    parodyhumor.lol
+  </text>
+
+  <!-- Floating masks outside card -->
+  <g transform="translate(1070, 150) scale(1.1)">
+    <path d="M0 35 Q0 0 35 0 Q70 0 70 35 Q70 55 55 65 Q35 75 15 65 Q0 55 0 35Z"
+          fill="url(#maskGrad)" stroke="#a855f7" stroke-width="2" opacity="0.8"/>
+    <path d="M15 28 Q22 22 29 28" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M41 28 Q48 22 55 28" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M15 45 Q35 65 55 45 Q35 55 15 45Z" fill="#fff"/>
+  </g>
+
+  <g transform="translate(50, 400) scale(0.9)">
+    <path d="M0 35 Q0 0 35 0 Q70 0 70 35 Q70 55 55 65 Q35 75 15 65 Q0 55 0 35Z"
+          fill="url(#maskGrad)" stroke="#a855f7" stroke-width="2" opacity="0.6"/>
+    <ellipse cx="22" cy="28" rx="8" ry="6" fill="#fff"/>
+    <ellipse cx="22" cy="28" rx="4" ry="4" fill="#1f2937"/>
+    <path d="M41 28 Q48 24 55 28" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M18 48 Q35 58 52 45" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

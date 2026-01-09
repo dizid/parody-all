@@ -20,7 +20,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
-      path: '/generate/:id',
+      path: '/generate',
       name: 'generate',
       component: () => import('../views/GenerateView.vue'),
       meta: { requiresAuth: true },
@@ -32,5 +32,8 @@ const router = createRouter({
     },
   ],
 })
+
+// Note: Auth guard is handled by Clerk at component level
+// DashboardView and GenerateView watch isSignedIn and redirect if not authenticated
 
 export default router

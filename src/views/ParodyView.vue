@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { supabase } from '../lib/supabase'
 import type { Parody, ParodyData, ParodyConfig } from '../types'
 import ParodyBacklink from '../components/ParodyBacklink.vue'
 
@@ -10,6 +9,7 @@ const route = useRoute()
 const parody = ref<Parody | null>(null)
 const loading = ref(true)
 const error = ref('')
+const isExpired = ref(false)
 
 const parodyData = computed<ParodyData | null>(() => {
   if (!parody.value?.parody_data) return null
@@ -28,14 +28,25 @@ onMounted(async () => {
 async function fetchParody() {
   const slug = route.params.slug as string
 
-  try {
-    const { data, error: fetchError } = await supabase
-      .from('parodies')
-      .select('*')
-      .eq('slug', slug)
-      .single()
+  if (!slug) {
+    error.value = 'Parody not found'
+    loading.value = false
+    return
+  }
 
-    if (fetchError) throw fetchError
+  try {
+    const response = await fetch(`/.netlify/functions/get-parody?slug=${slug}`)
+
+    if (response.status === 410) {
+      const data = await response.json()
+      error.value = data.error || 'This parody has expired'
+      isExpired.value = true
+      return
+    }
+
+    if (!response.ok) throw new Error('Failed to fetch parody')
+
+    const data = await response.json()
     parody.value = data
   } catch (e) {
     error.value = 'Parody not found'
@@ -64,12 +75,21 @@ function shareParody() {
 
     <!-- Error State -->
     <div v-else-if="error" class="flex items-center justify-center min-h-screen">
-      <div class="text-center">
-        <div class="text-4xl mb-4">😢</div>
-        <p class="text-red-500 mb-4">{{ error }}</p>
-        <RouterLink to="/" class="text-parody-primary hover:underline">
-          Back to Home
-        </RouterLink>
+      <div class="text-center max-w-md mx-auto px-4">
+        <div class="text-4xl mb-4">{{ isExpired ? '⏰' : '😢' }}</div>
+        <h2 v-if="isExpired" class="text-xl font-bold mb-2">Parody Expired</h2>
+        <p class="text-red-500 mb-6">{{ error }}</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <RouterLink
+            to="/dashboard"
+            class="inline-block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+          >
+            Create New Parody
+          </RouterLink>
+          <RouterLink to="/" class="text-parody-primary hover:underline py-3">
+            Back to Home
+          </RouterLink>
+        </div>
       </div>
     </div>
 
