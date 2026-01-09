@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+/* Custom theme colors for Parody Everything */
+@theme {
+  --color-parody-primary: #7c3aed;
+  --color-parody-secondary: #f59e0b;
+  --color-parody-accent: #ec4899;
+  --color-parody-dark: #1f2937;
+  --color-parody-light: #f9fafb;
+}
+
+/* Base styles */
+body {
+  @apply bg-parody-light text-parody-dark min-h-screen;
+}
+
+#app {
+  @apply min-h-screen;
+}
