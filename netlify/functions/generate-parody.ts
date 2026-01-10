@@ -91,10 +91,10 @@ const handler: Handler = async (event) => {
     `
 
     if (existingProfile.length === 0) {
-      // Create profile for new user
+      // Create profile for new user - no free credits, must pay
       await sql`
         INSERT INTO profiles (id, tier, parodies_used, parodies_limit)
-        VALUES (${userId}, 'free', 0, 1)
+        VALUES (${userId}, 'none', 0, 0)
       `
     }
 
@@ -125,7 +125,7 @@ const handler: Handler = async (event) => {
     // Create parody record with 'analyzing' status
     const parody = (await sql`
       INSERT INTO parodies (user_id, slug, original_url, status, backlink_size)
-      VALUES (${userId}, ${slug}, ${url}, 'analyzing', ${profile.tier === 'free' ? 'large' : 'medium'})
+      VALUES (${userId}, ${slug}, ${url}, 'analyzing', ${profile.tier === 'pro' ? 'none' : profile.tier === 'creator' ? 'small' : 'large'})
       RETURNING *
     `)[0]
 
