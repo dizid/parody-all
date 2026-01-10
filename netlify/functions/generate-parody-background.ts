@@ -2,6 +2,9 @@ import type { Handler } from '@netlify/functions'
 import { neon } from '@neondatabase/serverless'
 import Anthropic from '@anthropic-ai/sdk'
 import { Resend } from 'resend'
+import { isClaudeAPIDisabled, getKillSwitches, budgetExceededResponse } from './lib/killswitch'
+import { checkBudget, recordUsage } from './lib/budget'
+import { decrementActiveGenerations } from './lib/cache'
 
 // Minimum required content per site type
 const REQUIRED_CONTENT = {
@@ -114,7 +117,7 @@ async function sendNotificationEmail(
   try {
     if (success) {
       await resend.emails.send({
-        from: 'Parody Everything <noreply@parody.email>',
+        from: 'Parody Humor <noreply@parodyhumor.lol>',
         to: email,
         subject: `🎭 Your parody "${parodyName}" is ready!`,
         html: `
@@ -134,7 +137,7 @@ async function sendNotificationEmail(
       })
     } else {
       await resend.emails.send({
-        from: 'Parody Everything <noreply@parody.email>',
+        from: 'Parody Humor <noreply@parodyhumor.lol>',
         to: email,
         subject: '🎭 Update on your parody request',
         html: `
@@ -379,6 +382,33 @@ const handler: Handler = async (event) => {
     // Update status to generating
     await sql`UPDATE parodies SET status = 'generating' WHERE id = ${parodyId}`
 
+    // Check kill switch for Claude API
+    if (isClaudeAPIDisabled()) {
+      await sql`
+        UPDATE parodies
+        SET status = 'failed', error_message = 'AI generation is temporarily paused. Please try again later.'
+        WHERE id = ${parodyId}
+      `
+      await decrementActiveGenerations()
+      return { statusCode: 503, body: 'Claude API disabled' }
+    }
+
+    // Check budget before making expensive API call
+    const killSwitches = getKillSwitches()
+    const budget = await checkBudget(killSwitches.DAILY_BUDGET_CENTS)
+    if (!budget.allowed) {
+      await sql`
+        UPDATE parodies
+        SET status = 'failed', error_message = 'Daily generation limit reached. Please try again tomorrow.'
+        WHERE id = ${parodyId}
+      `
+      await decrementActiveGenerations()
+      if (notificationEmail) {
+        await sendNotificationEmail(notificationEmail, 'your parody', '', false, 'Daily capacity reached. Please try again tomorrow.')
+      }
+      return budgetExceededResponse()
+    }
+
     const anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY,
     })
@@ -444,6 +474,14 @@ const handler: Handler = async (event) => {
 
     console.log(`Parody ${parodyId} completed successfully`)
 
+    // Record API usage for budget tracking
+    const inputTokens = response.usage?.input_tokens || 2000
+    const outputTokens = response.usage?.output_tokens || 6000
+    await recordUsage(inputTokens, outputTokens)
+
+    // Decrement active generation counter
+    await decrementActiveGenerations()
+
     // Send success notification email if user provided one
     if (notificationEmail && parodySlug) {
       const siteUrl = process.env.URL || 'https://parodyeverything.com'
@@ -480,6 +518,9 @@ const handler: Handler = async (event) => {
         console.error('Failed to update parody status:', e)
       }
     }
+
+    // Decrement active generation counter on failure
+    await decrementActiveGenerations()
 
     // Send failure notification email if user provided one
     if (notificationEmail) {

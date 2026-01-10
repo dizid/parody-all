@@ -1,6 +1,7 @@
 import type { Handler } from '@netlify/functions'
 import { neon } from '@neondatabase/serverless'
 import Stripe from 'stripe'
+import { isMaintenanceMode } from './lib/killswitch'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -29,6 +30,11 @@ const handler: Handler = async (event) => {
     return { statusCode: 400, body: `Webhook Error: ${err.message}` }
   }
 
+  // Log if processing during maintenance mode (but don't block - we still want to capture payments)
+  if (isMaintenanceMode()) {
+    console.log(`Processing webhook ${stripeEvent.type} during maintenance mode`)
+  }
+
   const sql = neon(process.env.DATABASE_URL!)
 
   try {
@@ -36,21 +42,32 @@ const handler: Handler = async (event) => {
       case 'checkout.session.completed': {
         const session = stripeEvent.data.object as Stripe.Checkout.Session
         const userId = session.metadata?.user_id
-        const credits = parseInt(session.metadata?.credits || '1', 10)
+        const priceId = session.metadata?.price_id
 
         if (!userId) {
           console.error('No user_id in session metadata')
           break
         }
 
-        // Add credits to user's limit
-        await sql`
-          UPDATE profiles
-          SET parodies_limit = parodies_limit + ${credits}
-          WHERE id = ${userId}
-        `
-
-        console.log(`Added ${credits} credits to user ${userId}`)
+        // Handle one-time single parody purchase
+        if (priceId === process.env.STRIPE_SINGLE_PRICE_ID) {
+          await sql`
+            UPDATE profiles
+            SET parodies_limit = parodies_limit + 1,
+                tier = CASE WHEN tier = 'none' THEN 'single' ELSE tier END
+            WHERE id = ${userId}
+          `
+          console.log(`Added 1 credit to user ${userId} (single purchase)`)
+        } else {
+          // Legacy: add credits from metadata
+          const credits = parseInt(session.metadata?.credits || '1', 10)
+          await sql`
+            UPDATE profiles
+            SET parodies_limit = parodies_limit + ${credits}
+            WHERE id = ${userId}
+          `
+          console.log(`Added ${credits} credits to user ${userId}`)
+        }
         break
       }
 
@@ -71,28 +88,26 @@ const handler: Handler = async (event) => {
 
         // Update tier based on subscription
         const priceId = subscription.items.data[0]?.price.id
-        let tier = 'free'
-        let limit = 1
+        let tier = 'none'
+        let limit = 0
 
-        // Map price IDs to tiers (configure these in your Stripe dashboard)
-        if (priceId === process.env.STRIPE_STARTER_PRICE_ID) {
-          tier = 'starter'
+        // Map price IDs to tiers
+        if (priceId === process.env.STRIPE_CREATOR_PRICE_ID) {
+          tier = 'creator'
           limit = 10
         } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
           tier = 'pro'
-          limit = 50
-        } else if (priceId === process.env.STRIPE_UNLIMITED_PRICE_ID) {
-          tier = 'unlimited'
           limit = -1 // Unlimited
         }
 
+        // Reset parodies_used on new subscription/renewal
         await sql`
           UPDATE profiles
-          SET tier = ${tier}, parodies_limit = ${limit}
+          SET tier = ${tier}, parodies_limit = ${limit}, parodies_used = 0
           WHERE id = ${profile.id}
         `
 
-        console.log(`Updated user ${profile.id} to tier ${tier}`)
+        console.log(`Updated user ${profile.id} to tier ${tier} with ${limit} credits`)
         break
       }
 
@@ -100,14 +115,14 @@ const handler: Handler = async (event) => {
         const subscription = stripeEvent.data.object as Stripe.Subscription
         const customerId = subscription.customer as string
 
-        // Downgrade to free tier
+        // Downgrade to no tier - they keep remaining credits but can't renew
         await sql`
           UPDATE profiles
-          SET tier = 'free', parodies_limit = 1
+          SET tier = 'none'
           WHERE stripe_customer_id = ${customerId}
         `
 
-        console.log(`Downgraded customer ${customerId} to free tier`)
+        console.log(`Subscription cancelled for customer ${customerId}`)
         break
       }
     }

@@ -30,10 +30,10 @@ const handler: Handler = async (event) => {
     `)[0]
 
     if (!profile) {
-      // Create profile for new user
+      // Create profile for new user - no free credits, must pay
       profile = (await sql`
         INSERT INTO profiles (id, tier, parodies_used, parodies_limit)
-        VALUES (${userId}, 'free', 0, 1)
+        VALUES (${userId}, 'none', 0, 0)
         RETURNING *
       `)[0]
     }

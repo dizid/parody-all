@@ -19,7 +19,12 @@ const emailSubmitted = ref(false)
 const emailSubmitting = ref(false)
 const emailError = ref('')
 
-const MAX_POLLS = 120 // Allow longer polling since we have email capture
+// Exponential backoff polling to reduce server load
+const INITIAL_POLL_INTERVAL = 2000  // Start at 2 seconds
+const MAX_POLL_INTERVAL = 15000     // Max 15 seconds between polls
+const BACKOFF_MULTIPLIER = 1.5      // Increase by 50% each time after threshold
+const BACKOFF_THRESHOLD = 10        // Start backing off after 10 polls
+const MAX_POLL_TIME_MS = 6 * 60 * 1000 // Stop polling after 6 minutes
 const STUCK_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes before showing stuck message
 
 const steps = [
@@ -28,10 +33,13 @@ const steps = [
   { id: 'complete', label: 'Complete!', icon: '✅' },
 ]
 
-let pollInterval: number | null = null
+let pollTimeout: number | null = null
 let elapsedInterval: number | null = null
+let currentPollInterval = INITIAL_POLL_INTERVAL
+let pollStartTime = 0
 
 onMounted(async () => {
+  pollStartTime = Date.now()
   await fetchParody()
   startPolling()
   // Track elapsed time
@@ -41,8 +49,8 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (pollInterval) {
-    clearInterval(pollInterval)
+  if (pollTimeout) {
+    clearTimeout(pollTimeout)
   }
   if (elapsedInterval) {
     clearInterval(elapsedInterval)
@@ -66,17 +74,17 @@ async function fetchParody() {
     parody.value = data
 
     if (data.status === 'complete') {
-      if (pollInterval) clearInterval(pollInterval)
+      if (pollTimeout) clearTimeout(pollTimeout)
       router.push(`/p/${data.slug}`)
     } else if (data.status === 'failed') {
-      if (pollInterval) clearInterval(pollInterval)
+      if (pollTimeout) clearTimeout(pollTimeout)
       error.value = data.error_message || 'Generation failed. Please try again.'
     } else if (data.status === 'generating') {
       // Check if generation is stuck
       const createdAt = new Date(data.created_at).getTime()
       const now = Date.now()
       if (now - createdAt > STUCK_THRESHOLD_MS) {
-        if (pollInterval) clearInterval(pollInterval)
+        if (pollTimeout) clearTimeout(pollTimeout)
         error.value = 'Generation appears to be stuck. Please try creating a new parody.'
       }
     }
@@ -89,17 +97,33 @@ async function fetchParody() {
 }
 
 function startPolling() {
-  pollInterval = window.setInterval(async () => {
+  const poll = async () => {
     pollCount.value++
 
-    if (pollCount.value > MAX_POLLS) {
-      if (pollInterval) clearInterval(pollInterval)
+    // Check if we've exceeded max poll time
+    if (Date.now() - pollStartTime > MAX_POLL_TIME_MS) {
       error.value = 'Generation is taking longer than expected. Please check back in a few minutes or try again.'
       return
     }
 
     await fetchParody()
-  }, 3000)
+
+    // If still in progress, schedule next poll
+    if (parody.value?.status !== 'complete' && parody.value?.status !== 'failed' && !error.value) {
+      // Apply exponential backoff after threshold
+      if (pollCount.value > BACKOFF_THRESHOLD) {
+        currentPollInterval = Math.min(
+          currentPollInterval * BACKOFF_MULTIPLIER,
+          MAX_POLL_INTERVAL
+        )
+      }
+
+      pollTimeout = window.setTimeout(poll, currentPollInterval)
+    }
+  }
+
+  // Start first poll after initial interval
+  pollTimeout = window.setTimeout(poll, currentPollInterval)
 }
 
 function getCurrentStep() {

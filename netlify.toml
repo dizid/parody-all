@@ -6,10 +6,40 @@
 [functions]
   node_bundler = "esbuild"
 
+[build.environment]
+  NODE_VERSION = "22"
+
+# Cache static assets aggressively (hashed by Vite)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache JS/CSS files
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache completed parody pages at edge (1 min cache, 5 min stale-while-revalidate)
+[[headers]]
+  for = "/p/*"
+  [headers.values]
+    Cache-Control = "public, max-age=60, stale-while-revalidate=300"
+
+# No cache for API endpoints (functions handle their own caching)
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# SPA fallback (must be last)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[build.environment]
-  NODE_VERSION = "22"

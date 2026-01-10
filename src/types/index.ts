@@ -1,7 +1,7 @@
 // Application types
 
-export type Tier = 'free' | 'starter' | 'pro' | 'unlimited'
-export type BacklinkSize = 'large' | 'medium' | 'small' | 'minimal'
+export type Tier = 'none' | 'single' | 'creator' | 'pro'
+export type BacklinkSize = 'large' | 'small' | 'none'
 
 export interface Profile {
   id: string
@@ -31,37 +31,32 @@ export interface Parody {
 
 // Pricing tiers
 export const PRICING_TIERS = {
-  free: {
-    name: 'Free',
-    price: 0,
+  single: {
+    name: 'Single Parody',
+    price: 49,
     parodies: 1,
     duration: '1 week',
-    backlink: 'large',
+    backlink: 'large' as BacklinkSize,
+    isSubscription: false,
     features: ['1 parody site', 'Expires after 1 week', 'Promotional backlinks'],
   },
-  starter: {
-    name: 'Starter',
-    price: 5,
-    parodies: 3,
+  creator: {
+    name: 'Creator',
+    price: 299,
+    parodies: 10,
     duration: '1 month',
-    backlink: 'medium',
-    features: ['3 parody sites/month', 'Sites live for 1 month', 'Medium backlinks'],
+    backlink: 'small' as BacklinkSize,
+    isSubscription: true,
+    features: ['10 parody sites/month', 'Sites live for 1 month', 'Small backlinks'],
   },
   pro: {
     name: 'Pro',
-    price: 15,
-    parodies: 10,
-    duration: '3 months',
-    backlink: 'small',
-    features: ['10 parody sites/month', 'Sites live for 3 months', 'Small backlinks'],
-  },
-  unlimited: {
-    name: 'Unlimited',
-    price: 39,
-    parodies: -1, // unlimited
+    price: 599,
+    parodies: -1,
     duration: 'forever',
-    backlink: 'minimal',
-    features: ['Unlimited parodies', 'Sites never expire', 'Minimal branding'],
+    backlink: 'none' as BacklinkSize,
+    isSubscription: true,
+    features: ['Unlimited parodies', 'Sites never expire', 'No backlinks'],
   },
 } as const
 

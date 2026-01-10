@@ -19,7 +19,6 @@ const isAnalyzing = ref(false)
 const isGenerating = ref(false)
 const analysisResult = ref<AnalysisResult | null>(null)
 const error = ref('')
-const showPricing = ref(false)
 const animatedCount = ref(0)
 
 // Animated counter on mount
@@ -218,9 +217,9 @@ function scrollToTop() {
 
         <p v-if="error" class="mt-4 text-red-300 animate-shake">{{ error }}</p>
 
-        <!-- Free tier badge -->
+        <!-- Pricing teaser -->
         <p class="mt-6 text-white/60 text-sm animate-fade-in-up animation-delay-800">
-          🎁 <span class="text-yellow-400 font-semibold">First parody FREE</span> - No credit card required
+          💰 <span class="text-yellow-400 font-semibold">From $49</span> - Premium viral content on demand
         </p>
       </div>
 
@@ -377,7 +376,7 @@ function scrollToTop() {
 
     <!-- Pricing Section -->
     <section class="py-24 bg-gradient-to-br from-purple-900 via-violet-800 to-fuchsia-900 text-white">
-      <div class="max-w-6xl mx-auto px-4">
+      <div class="max-w-5xl mx-auto px-4">
         <div class="text-center mb-16">
           <span class="inline-block bg-white/10 backdrop-blur-sm px-4 py-1 rounded-full text-sm font-semibold mb-4">
             PRICING
@@ -386,45 +385,74 @@ function scrollToTop() {
             Simple, Transparent Pricing
           </h2>
           <p class="text-xl text-white/80 max-w-2xl mx-auto">
-            Start free, upgrade when you need more
+            Try once or subscribe for unlimited comedy
           </p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div
-            v-for="(tier, key) in PRICING_TIERS"
-            :key="key"
-            :class="[
-              'rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2',
-              key === 'pro'
-                ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-gray-900 shadow-xl shadow-yellow-500/30 scale-105'
-                : 'bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20'
-            ]"
-          >
-            <div v-if="key === 'pro'" class="text-xs font-bold uppercase mb-2 text-gray-900/70">Most Popular</div>
-            <h3 class="text-2xl font-bold mb-2">{{ tier.name }}</h3>
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Single Parody -->
+          <div class="rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20">
+            <div class="text-xs font-bold uppercase mb-2 text-white/60">Try It Out</div>
+            <h3 class="text-2xl font-bold mb-2">{{ PRICING_TIERS.single.name }}</h3>
             <div class="flex items-baseline gap-1 mb-4">
-              <span class="text-4xl font-black">${{ tier.price }}</span>
-              <span :class="key === 'pro' ? 'text-gray-900/70' : 'text-white/60'">/month</span>
+              <span class="text-4xl font-black">${{ PRICING_TIERS.single.price }}</span>
+              <span class="text-white/60">one-time</span>
             </div>
             <ul class="space-y-3 mb-6">
-              <li v-for="feature in tier.features" :key="feature" class="flex items-center gap-2">
-                <span :class="key === 'pro' ? 'text-gray-900' : 'text-green-400'">✓</span>
-                <span :class="key === 'pro' ? 'text-gray-900' : 'text-white/80'">{{ feature }}</span>
+              <li v-for="feature in PRICING_TIERS.single.features" :key="feature" class="flex items-center gap-2">
+                <span class="text-green-400">✓</span>
+                <span class="text-white/80">{{ feature }}</span>
               </li>
             </ul>
             <button
-              @click="key === 'free' ? router.push('/login') : showPricing = true"
-              :class="[
-                'w-full py-3 rounded-xl font-bold transition-all duration-300',
-                key === 'pro'
-                  ? 'bg-gray-900 text-white hover:bg-gray-800'
-                  : key === 'free'
-                    ? 'bg-white text-purple-600 hover:bg-white/90'
-                    : 'bg-white/20 text-white hover:bg-white/30'
-              ]"
+              @click="router.push('/login')"
+              class="w-full py-3 rounded-xl font-bold transition-all duration-300 bg-white/20 text-white hover:bg-white/30"
             >
-              {{ key === 'free' ? 'Get Started Free' : 'Choose Plan' }}
+              Buy Now
+            </button>
+          </div>
+
+          <!-- Creator (Best Value) -->
+          <div class="rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 bg-gradient-to-br from-yellow-400 to-orange-500 text-gray-900 shadow-xl shadow-yellow-500/30 scale-105">
+            <div class="text-xs font-bold uppercase mb-2 text-gray-900/70">Best Value</div>
+            <h3 class="text-2xl font-bold mb-2">{{ PRICING_TIERS.creator.name }}</h3>
+            <div class="flex items-baseline gap-1 mb-4">
+              <span class="text-4xl font-black">${{ PRICING_TIERS.creator.price }}</span>
+              <span class="text-gray-900/70">/month</span>
+            </div>
+            <ul class="space-y-3 mb-6">
+              <li v-for="feature in PRICING_TIERS.creator.features" :key="feature" class="flex items-center gap-2">
+                <span class="text-gray-900">✓</span>
+                <span class="text-gray-900">{{ feature }}</span>
+              </li>
+            </ul>
+            <button
+              @click="router.push('/login')"
+              class="w-full py-3 rounded-xl font-bold transition-all duration-300 bg-gray-900 text-white hover:bg-gray-800"
+            >
+              Subscribe
+            </button>
+          </div>
+
+          <!-- Pro -->
+          <div class="rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20">
+            <div class="text-xs font-bold uppercase mb-2 text-white/60">Unlimited</div>
+            <h3 class="text-2xl font-bold mb-2">{{ PRICING_TIERS.pro.name }}</h3>
+            <div class="flex items-baseline gap-1 mb-4">
+              <span class="text-4xl font-black">${{ PRICING_TIERS.pro.price }}</span>
+              <span class="text-white/60">/month</span>
+            </div>
+            <ul class="space-y-3 mb-6">
+              <li v-for="feature in PRICING_TIERS.pro.features" :key="feature" class="flex items-center gap-2">
+                <span class="text-green-400">✓</span>
+                <span class="text-white/80">{{ feature }}</span>
+              </li>
+            </ul>
+            <button
+              @click="router.push('/login')"
+              class="w-full py-3 rounded-xl font-bold transition-all duration-300 bg-white/20 text-white hover:bg-white/30"
+            >
+              Subscribe
             </button>
           </div>
         </div>
@@ -445,7 +473,7 @@ function scrollToTop() {
           @click="scrollToTop"
           class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300"
         >
-          Create Your First Parody Free →
+          Create Your First Parody →
         </button>
       </div>
     </section>

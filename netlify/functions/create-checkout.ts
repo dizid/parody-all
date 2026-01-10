@@ -1,6 +1,7 @@
 import type { Handler } from '@netlify/functions'
 import { neon } from '@neondatabase/serverless'
 import Stripe from 'stripe'
+import { isMaintenanceMode, maintenanceResponse } from './lib/killswitch'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -21,6 +22,11 @@ const handler: Handler = async (event) => {
       headers,
       body: JSON.stringify({ error: 'Method not allowed' }),
     }
+  }
+
+  // Kill switch: maintenance mode blocks new checkouts
+  if (isMaintenanceMode()) {
+    return maintenanceResponse()
   }
 
   try {

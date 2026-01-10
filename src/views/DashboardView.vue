@@ -3,7 +3,7 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
-import type { Parody } from '../types'
+import { PRICING_TIERS, type Parody } from '../types'
 
 interface Profile {
   id: string
@@ -222,7 +222,9 @@ function getStatusBadge(status: string) {
           <div>
             <p class="font-semibold text-lg">{{ user.fullName || user.primaryEmailAddress?.emailAddress }}</p>
             <p class="text-white/80 text-sm">
-              {{ profile?.tier === 'unlimited' ? 'Unlimited' : `${creditsRemaining} credit${creditsRemaining === 1 ? '' : 's'} remaining` }}
+              <span v-if="profile?.tier === 'pro'">Pro Plan • {{ creditsRemaining }} credits this month</span>
+              <span v-else-if="profile?.tier === 'creator'">Creator Plan • {{ creditsRemaining }} credits this month</span>
+              <span v-else>{{ creditsRemaining }} credit{{ creditsRemaining === 1 ? '' : 's' }} remaining</span>
             </p>
           </div>
         </div>
@@ -231,8 +233,57 @@ function getStatusBadge(status: string) {
           :disabled="isPurchasing"
           class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50"
         >
-          {{ isPurchasing ? 'Loading...' : 'Buy Credits' }}
+          {{ isPurchasing ? 'Loading...' : (profile?.tier === 'none' || creditsRemaining === 0 ? 'Get Credits' : 'Buy More') }}
         </button>
+      </div>
+    </div>
+
+    <!-- No Credits Paywall -->
+    <div v-if="profile && creditsRemaining === 0 && !testKey" class="rounded-2xl shadow-lg p-8 mb-8 text-center" style="background-color: var(--color-bg-card); border: 2px solid var(--color-border);">
+      <div class="text-5xl mb-4">💳</div>
+      <h2 class="text-2xl font-bold mb-2" style="color: var(--color-text-primary);">Get Credits to Generate Parodies</h2>
+      <p class="mb-6" style="color: var(--color-text-secondary);">Choose a plan that works for you</p>
+
+      <div class="grid md:grid-cols-3 gap-4 max-w-3xl mx-auto">
+        <!-- Single -->
+        <div class="rounded-xl p-4 border" style="border-color: var(--color-border);">
+          <h3 class="font-bold" style="color: var(--color-text-primary);">{{ PRICING_TIERS.single.name }}</h3>
+          <p class="text-2xl font-black text-purple-600">${{ PRICING_TIERS.single.price }}</p>
+          <p class="text-sm mb-3" style="color: var(--color-text-secondary);">one-time</p>
+          <button
+            @click="purchaseCredits"
+            class="w-full bg-purple-100 text-purple-700 py-2 rounded-lg font-medium hover:bg-purple-200 transition-colors"
+          >
+            Buy Now
+          </button>
+        </div>
+
+        <!-- Creator (Highlighted) -->
+        <div class="rounded-xl p-4 border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 to-orange-50">
+          <div class="text-xs font-bold text-yellow-600 mb-1">BEST VALUE</div>
+          <h3 class="font-bold" style="color: var(--color-text-primary);">{{ PRICING_TIERS.creator.name }}</h3>
+          <p class="text-2xl font-black text-purple-600">${{ PRICING_TIERS.creator.price }}<span class="text-sm font-normal">/mo</span></p>
+          <p class="text-sm mb-3" style="color: var(--color-text-secondary);">10 parodies/month</p>
+          <button
+            @click="purchaseCredits"
+            class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 py-2 rounded-lg font-bold hover:shadow-lg transition-all"
+          >
+            Subscribe
+          </button>
+        </div>
+
+        <!-- Pro -->
+        <div class="rounded-xl p-4 border" style="border-color: var(--color-border);">
+          <h3 class="font-bold" style="color: var(--color-text-primary);">{{ PRICING_TIERS.pro.name }}</h3>
+          <p class="text-2xl font-black text-purple-600">${{ PRICING_TIERS.pro.price }}<span class="text-sm font-normal">/mo</span></p>
+          <p class="text-sm mb-3" style="color: var(--color-text-secondary);">Unlimited parodies</p>
+          <button
+            @click="purchaseCredits"
+            class="w-full bg-purple-100 text-purple-700 py-2 rounded-lg font-medium hover:bg-purple-200 transition-colors"
+          >
+            Subscribe
+          </button>
+        </div>
       </div>
     </div>
 
@@ -268,7 +319,7 @@ function getStatusBadge(status: string) {
       <div v-else-if="parodies.length === 0" class="text-center py-8" style="color: var(--color-text-secondary);">
         <p class="text-4xl mb-4">🎭</p>
         <p>No parodies yet. Create your first one above!</p>
-        <p class="text-sm mt-2">Your first parody is FREE!</p>
+        <p v-if="creditsRemaining > 0" class="text-sm mt-2">You have {{ creditsRemaining }} credit{{ creditsRemaining === 1 ? '' : 's' }} ready to use</p>
       </div>
 
       <div v-else class="space-y-4">

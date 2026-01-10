@@ -1,5 +1,14 @@
 import type { Handler } from '@netlify/functions'
 import { neon } from '@neondatabase/serverless'
+import {
+  isMaintenanceMode,
+  isGenerationsDisabled,
+  maintenanceResponse,
+  capacityExceededResponse,
+  getKillSwitches,
+} from './lib/killswitch'
+import { checkUserRateLimit } from './lib/rate-limit'
+import { getActiveGenerations, incrementActiveGenerations } from './lib/cache'
 
 const handler: Handler = async (event) => {
   const headers = {
@@ -17,6 +26,19 @@ const handler: Handler = async (event) => {
       statusCode: 405,
       headers,
       body: JSON.stringify({ error: 'Method not allowed' }),
+    }
+  }
+
+  // Kill switch checks
+  if (isMaintenanceMode()) {
+    return maintenanceResponse()
+  }
+
+  if (isGenerationsDisabled()) {
+    return {
+      statusCode: 503,
+      headers,
+      body: JSON.stringify({ error: 'New parody generation is temporarily paused. Please try again later.' }),
     }
   }
 
@@ -41,6 +63,26 @@ const handler: Handler = async (event) => {
         headers,
         body: JSON.stringify({ error: 'Missing url or userId' }),
       }
+    }
+
+    // Check rate limit (5 generations per hour per user)
+    const rateLimit = await checkUserRateLimit(userId, 'generate')
+    if (!rateLimit.allowed) {
+      return {
+        statusCode: 429,
+        headers: { ...headers, 'Retry-After': String(rateLimit.resetInSeconds) },
+        body: JSON.stringify({
+          error: 'Rate limit exceeded. Please wait before generating more parodies.',
+          retryAfter: rateLimit.resetInSeconds,
+        }),
+      }
+    }
+
+    // Check concurrent generation capacity
+    const killSwitches = getKillSwitches()
+    const activeGens = await getActiveGenerations()
+    if (activeGens >= killSwitches.MAX_CONCURRENT_GENERATIONS) {
+      return capacityExceededResponse()
     }
 
     // Ensure user profile exists
@@ -91,6 +133,9 @@ const handler: Handler = async (event) => {
     await sql`
       UPDATE profiles SET parodies_used = parodies_used + 1 WHERE id = ${userId}
     `
+
+    // Track active generation for capacity control
+    await incrementActiveGenerations()
 
     // Invoke background function to do the actual generation
     // This runs asynchronously and has a 15-minute timeout
