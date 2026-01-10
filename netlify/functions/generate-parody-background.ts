@@ -215,11 +215,115 @@ async function callClaudeWithRetry(
   throw lastError
 }
 
-// Build the main prompt for Claude
-function buildPrompt(url: string): string {
-  return `You are a master satirist creating a parody of: ${url}
+// Stage 1: Analyze the site for targeted humor
+interface SiteAnalysis {
+  siteType: 'ecommerce' | 'news' | 'travel' | 'social' | 'corporate' | 'food'
+  businessModel: string
+  realPainPoints: string[]
+  darkPatterns: string[]
+  marketingTone: string
+  signatureElements: string[]
+  parodyNameSuggestions: string[]
+}
 
-## STEP 1: CATEGORIZE THE SITE (CRITICAL - DO THIS FIRST)
+async function analyzeSite(
+  anthropic: Anthropic,
+  url: string
+): Promise<SiteAnalysis | null> {
+  const prompt = `You are a cynical tech journalist analyzing: ${url}
+
+Based on this URL and your knowledge of this company/industry, provide a quick analysis:
+
+1. SITE TYPE: Categorize as exactly one of: "ecommerce", "news", "travel", "social", "corporate", "food"
+   - ecommerce = online stores (Amazon, eBay, Shopify)
+   - news = media/blogs (CNN, BuzzFeed, TechCrunch)
+   - travel = booking sites (Airbnb, Booking.com)
+   - social = social networks (Twitter, Facebook, LinkedIn)
+   - corporate = SaaS/company sites (Stripe, Salesforce)
+   - food = restaurant/delivery (DoorDash, UberEats)
+
+2. BUSINESS MODEL: How do they make money? (1 sentence)
+
+3. REAL PAIN POINTS: List 3-5 ACTUAL frustrations users have with this site/company.
+   Think: "What do people complain about on Reddit/Twitter about this?"
+   Be SPECIFIC to this company, not generic complaints.
+
+4. DARK PATTERNS: List 2-4 manipulative tactics or annoying practices they use.
+   Examples: hidden fees, fake urgency, subscription traps, data harvesting.
+
+5. MARKETING TONE: How does their marketing sound? (1-2 words)
+   Examples: "Aspirational tech-bro", "Fear-mongering", "Fake friendly", "Corporate jargon"
+
+6. SIGNATURE ELEMENTS: 2-3 recognizable UI/UX elements or brand quirks to mock.
+   Examples: Amazon's "Buy Box", Uber's surge multiplier, LinkedIn's "Who viewed your profile"
+
+7. PARODY NAME IDEAS: Suggest 2-3 punny parody names that hint at the main joke.
+   Examples: Amazon→Scamazon, Uber→Goober, LinkedIn→LinkedOut
+
+Return ONLY this JSON:
+{
+  "siteType": "ecommerce|news|travel|social|corporate|food",
+  "businessModel": "...",
+  "realPainPoints": ["specific complaint 1", "specific complaint 2", ...],
+  "darkPatterns": ["pattern 1", "pattern 2", ...],
+  "marketingTone": "...",
+  "signatureElements": ["element 1", "element 2", ...],
+  "parodyNameSuggestions": ["Name1", "Name2", "Name3"]
+}`
+
+  try {
+    console.log('Stage 1: Analyzing site for targeted humor...')
+    const response = await callClaudeWithRetry(anthropic, {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const content = response.content[0]
+    if (content.type !== 'text') {
+      throw new Error('Unexpected response type')
+    }
+
+    const analysis = extractJSON(content.text) as SiteAnalysis
+    console.log(`Analysis complete: ${analysis.siteType} - "${analysis.businessModel}"`)
+    console.log(`Pain points: ${analysis.realPainPoints.join(', ')}`)
+    return analysis
+  } catch (error) {
+    console.error('Site analysis failed, falling back to single-stage generation:', error)
+    return null
+  }
+}
+
+// Build the main prompt for Claude
+function buildPrompt(url: string, analysis?: SiteAnalysis | null): string {
+  // If we have analysis, inject it as context for targeted humor
+  const analysisContext = analysis ? `
+## SITE ANALYSIS (USE THIS TO MAKE HUMOR TARGETED!)
+Based on research, here's what we know about this site:
+
+**Business Model:** ${analysis.businessModel}
+
+**Real Pain Points (mock these specifically!):**
+${analysis.realPainPoints.map(p => `- ${p}`).join('\n')}
+
+**Dark Patterns They Use:**
+${analysis.darkPatterns.map(p => `- ${p}`).join('\n')}
+
+**Their Marketing Tone:** ${analysis.marketingTone}
+
+**Signature Elements to Mock:**
+${analysis.signatureElements.map(e => `- ${e}`).join('\n')}
+
+**Suggested Parody Names:** ${analysis.parodyNameSuggestions.join(', ')}
+
+CRITICAL: Every product, fee, review, and popup should reference these REAL issues above.
+Don't invent random jokes - satirize the ACTUAL problems users have with this site.
+The humor should make users think "this is too real" not "this is random nonsense."
+
+` : ''
+  return `You are a master satirist creating a parody of: ${url}
+${analysisContext}
+## STEP 1: CATEGORIZE THE SITE${analysis ? ' (already analyzed above - use the provided siteType)' : ' (CRITICAL - DO THIS FIRST)'}
 Identify what type of site this is:
 - "ecommerce" → Online stores (Amazon, eBay, Etsy, Shopify stores)
 - "news" → News/media/blogs (CNN, NYT, BuzzFeed, TechCrunch)
@@ -335,7 +439,7 @@ Return ONLY valid JSON, no markdown code blocks or explanations.`
 }
 
 // Build retry prompt with validation feedback
-function buildRetryPrompt(url: string, issues: string[]): string {
+function buildRetryPrompt(url: string, issues: string[], analysis?: SiteAnalysis | null): string {
   return `You are a master satirist creating a parody of: ${url}
 
 IMPORTANT: Your previous attempt was missing required content. Please fix these issues:
@@ -343,7 +447,7 @@ ${issues.map(i => `- ${i}`).join('\n')}
 
 Generate a COMPLETE parody with ALL required fields. Make sure to include enough items in each array.
 
-${buildPrompt(url).split('\n').slice(1).join('\n')}`
+${buildPrompt(url, analysis).split('\n').slice(1).join('\n')}`
 }
 
 // Background function - does the actual Claude API work
@@ -413,12 +517,15 @@ const handler: Handler = async (event) => {
       apiKey: process.env.ANTHROPIC_API_KEY,
     })
 
-    // First attempt
-    console.log('Calling Claude API (attempt 1)...')
+    // Stage 1: Analyze site for targeted humor (gracefully falls back if it fails)
+    const analysis = await analyzeSite(anthropic, url)
+
+    // Stage 2: Generate parody content using analysis
+    console.log('Stage 2: Generating parody content...')
     let response = await callClaudeWithRetry(anthropic, {
       model: 'claude-sonnet-4-20250514',
       max_tokens: 8000,
-      messages: [{ role: 'user', content: buildPrompt(url) }],
+      messages: [{ role: 'user', content: buildPrompt(url, analysis) }],
     })
 
     let content = response.content[0]
@@ -440,7 +547,7 @@ const handler: Handler = async (event) => {
       response = await callClaudeWithRetry(anthropic, {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 8000,
-        messages: [{ role: 'user', content: buildRetryPrompt(url, validation.issues) }],
+        messages: [{ role: 'user', content: buildRetryPrompt(url, validation.issues, analysis) }],
       })
 
       content = response.content[0]
