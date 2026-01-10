@@ -327,3 +327,14 @@ export interface AnalysisResult {
   description: string
   sampleContent: string[]
 }
+
+// Two-stage humor generation: Stage 1 analysis
+export interface SiteAnalysis {
+  siteType: SiteType
+  businessModel: string              // "Subscription SaaS", "Marketplace", etc.
+  realPainPoints: string[]           // 3-5 actual user complaints
+  darkPatterns: string[]             // Tricks/tactics they use
+  marketingTone: string              // "Aspirational", "Fear-based", etc.
+  signatureElements: string[]        // Recognizable UI/UX patterns to mock
+  parodyNameSuggestions: string[]    // 2-3 punny name ideas
+}
