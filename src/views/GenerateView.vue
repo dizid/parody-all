@@ -95,10 +95,10 @@ function getCurrentStep() {
 
 <template>
   <div class="max-w-2xl mx-auto px-4 py-16">
-    <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+    <div class="rounded-2xl shadow-lg p-8 text-center" style="background-color: var(--color-bg-card);">
       <div v-if="loading">
         <div class="animate-spin text-4xl mb-4">⏳</div>
-        <p class="text-gray-600">Loading...</p>
+        <p style="color: var(--color-text-secondary);">Loading...</p>
       </div>
 
       <div v-else-if="error">
@@ -118,8 +118,8 @@ function getCurrentStep() {
       </div>
 
       <div v-else-if="parody">
-        <h1 class="text-2xl font-bold mb-2">Generating Your Parody</h1>
-        <p class="text-gray-600 mb-8">{{ parody.original_url }}</p>
+        <h1 class="text-2xl font-bold mb-2" style="color: var(--color-text-primary);">Generating Your Parody</h1>
+        <p class="mb-8" style="color: var(--color-text-secondary);">{{ parody.original_url }}</p>
 
         <!-- Progress Steps -->
         <div class="space-y-6 mb-8">
@@ -132,18 +132,16 @@ function getCurrentStep() {
               :class="[
                 'w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all',
                 index <= getCurrentStep()
-                  ? 'bg-purple-100'
-                  : 'bg-gray-100'
+                  ? 'bg-purple-500/20'
+                  : 'bg-gray-500/20'
               ]"
             >
               {{ step.icon }}
             </div>
             <div class="text-left">
               <p
-                :class="[
-                  'font-medium',
-                  index <= getCurrentStep() ? 'text-gray-900' : 'text-gray-400'
-                ]"
+                class="font-medium"
+                :style="{ color: index <= getCurrentStep() ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }"
               >
                 {{ step.label }}
               </p>
@@ -164,7 +162,7 @@ function getCurrentStep() {
             <div class="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
             <div class="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
           </div>
-          <p class="text-gray-500 mt-4 text-sm">
+          <p class="mt-4 text-sm" style="color: var(--color-text-secondary);">
             This usually takes 30-60 seconds. Don't close this page.
           </p>
         </div>

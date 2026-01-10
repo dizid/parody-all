@@ -36,6 +36,9 @@ const creditsRemaining = computed(() => {
 
 const canGenerate = computed(() => creditsRemaining.value > 0)
 
+// Test bypass via URL param ?test=test123
+const testKey = computed(() => route.query.test as string | undefined)
+
 // Check for payment result on mount
 onMounted(() => {
   const payment = route.query.payment
@@ -135,7 +138,8 @@ async function purchaseCredits() {
 async function startGeneration() {
   if (!url.value || !user.value) return
 
-  if (!canGenerate.value) {
+  // Allow bypass with test key
+  if (!canGenerate.value && !testKey.value) {
     paymentMessage.value = 'You have no credits remaining. Please purchase more to continue.'
     return
   }
@@ -155,6 +159,7 @@ async function startGeneration() {
       body: JSON.stringify({
         url: url.value,
         userId: user.value.id,
+        ...(testKey.value && { testKey: testKey.value }),
       }),
     })
 
@@ -232,34 +237,35 @@ function getStatusBadge(status: string) {
     </div>
 
     <!-- Create New Parody -->
-    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-      <h2 class="text-xl font-semibold mb-4">Create New Parody</h2>
+    <div class="rounded-2xl shadow-lg p-6 mb-8" style="background-color: var(--color-bg-card);">
+      <h2 class="text-xl font-semibold mb-4" style="color: var(--color-text-primary);">Create New Parody</h2>
       <form @submit.prevent="startGeneration" class="flex gap-4">
         <input
           v-model="url"
           type="text"
           placeholder="Enter a URL to parody (e.g., amazon.com)"
-          class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+          class="flex-1 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+          style="background-color: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--color-text-primary);"
         />
         <button
           type="submit"
-          :disabled="isGenerating || !url || !canGenerate"
+          :disabled="isGenerating || !url || (!canGenerate && !testKey)"
           class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-50 transition-all"
         >
-          {{ isGenerating ? 'Starting...' : canGenerate ? 'Generate Parody' : 'No Credits' }}
+          {{ isGenerating ? 'Starting...' : (canGenerate || testKey) ? 'Generate Parody' : 'No Credits' }}
         </button>
       </form>
     </div>
 
     <!-- Parodies List -->
-    <div class="bg-white rounded-2xl shadow-lg p-6">
-      <h2 class="text-xl font-semibold mb-4">Your Parodies</h2>
+    <div class="rounded-2xl shadow-lg p-6" style="background-color: var(--color-bg-card);">
+      <h2 class="text-xl font-semibold mb-4" style="color: var(--color-text-primary);">Your Parodies</h2>
 
-      <div v-if="loading" class="text-center py-8 text-gray-500">
+      <div v-if="loading" class="text-center py-8" style="color: var(--color-text-secondary);">
         Loading...
       </div>
 
-      <div v-else-if="parodies.length === 0" class="text-center py-8 text-gray-500">
+      <div v-else-if="parodies.length === 0" class="text-center py-8" style="color: var(--color-text-secondary);">
         <p class="text-4xl mb-4">🎭</p>
         <p>No parodies yet. Create your first one above!</p>
         <p class="text-sm mt-2">Your first parody is FREE!</p>
@@ -269,12 +275,13 @@ function getStatusBadge(status: string) {
         <div
           v-for="parody in parodies"
           :key="parody.id"
-          class="border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:border-purple-300 transition-colors"
+          class="rounded-xl p-4 flex items-center justify-between hover:border-purple-300 transition-colors"
+          style="border: 1px solid var(--color-border);"
         >
           <div>
-            <h3 class="font-semibold">{{ parody.parody_name }}</h3>
-            <p class="text-sm text-gray-500">{{ parody.original_url }}</p>
-            <p class="text-xs text-gray-400 mt-1">
+            <h3 class="font-semibold" style="color: var(--color-text-primary);">{{ parody.parody_name }}</h3>
+            <p class="text-sm" style="color: var(--color-text-secondary);">{{ parody.original_url }}</p>
+            <p class="text-xs mt-1" style="color: var(--color-text-secondary); opacity: 0.7;">
               {{ new Date(parody.created_at).toLocaleDateString() }}
             </p>
           </div>

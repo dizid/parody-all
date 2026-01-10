@@ -10,15 +10,15 @@ export function useAuth() {
   const loading = computed(() => !isLoaded.value)
 
   async function signOut() {
-    await clerk.signOut()
+    await clerk.value?.signOut()
   }
 
   function openSignIn() {
-    clerk.openSignIn()
+    clerk.value?.openSignIn()
   }
 
   function openSignUp() {
-    clerk.openSignUp()
+    clerk.value?.openSignUp()
   }
 
   return {

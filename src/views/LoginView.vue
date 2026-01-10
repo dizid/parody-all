@@ -27,17 +27,17 @@ watch(isSignedIn, (signedIn) => {
         <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl shadow-lg shadow-purple-500/30 mb-4">
           <span class="text-3xl">🎭</span>
         </div>
-        <h1 class="text-3xl font-black text-gray-900">Welcome to Parody Everything</h1>
-        <p class="text-gray-600 mt-2">Sign in to start creating hilarious parodies</p>
+        <h1 class="text-3xl font-black" style="color: var(--color-text-primary);">Welcome to Parody Everything</h1>
+        <p class="mt-2" style="color: var(--color-text-secondary);">Sign in to start creating hilarious parodies</p>
       </div>
 
       <!-- Free trial badge -->
-      <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 mb-6">
+      <div class="rounded-xl p-4 mb-6 border border-green-500/30 bg-green-500/10">
         <div class="flex items-center gap-3">
           <span class="text-2xl">🎁</span>
           <div>
-            <p class="font-semibold text-green-800">First parody is FREE!</p>
-            <p class="text-sm text-green-600">No credit card required</p>
+            <p class="font-semibold text-green-400">First parody is FREE!</p>
+            <p class="text-sm text-green-500/80">No credit card required</p>
           </div>
         </div>
       </div>
@@ -60,7 +60,7 @@ watch(isSignedIn, (signedIn) => {
       </div>
 
       <!-- Trust badges -->
-      <div class="flex items-center justify-center gap-6 mt-8 text-gray-400 text-sm">
+      <div class="flex items-center justify-center gap-6 mt-8 text-sm" style="color: var(--color-text-secondary)">
         <span class="flex items-center gap-1">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>

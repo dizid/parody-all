@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
 import { PRICING_TIERS, type AnalysisResult, type SiteType } from '../types'
 
 const router = useRouter()
+const route = useRoute()
 const { isSignedIn } = useAuth()
+const { user } = useUser()
+const { getToken } = useClerkAuth()
+
+// Test bypass via URL param ?test=test123
+const testKey = computed(() => route.query.test as string | undefined)
 
 const url = ref('')
 const isAnalyzing = ref(false)
+const isGenerating = ref(false)
 const analysisResult = ref<AnalysisResult | null>(null)
 const error = ref('')
 const showPricing = ref(false)
@@ -83,12 +91,46 @@ async function analyzeUrl() {
   }
 }
 
-function generateParody() {
+async function generateParody() {
   if (!isSignedIn.value) {
     router.push('/login')
     return
   }
-  router.push({ path: '/generate', query: { url: analysisResult.value?.url } })
+
+  if (!user.value || !analysisResult.value?.url) return
+
+  isGenerating.value = true
+  error.value = ''
+
+  try {
+    const token = await getToken.value()
+
+    const response = await fetch('/.netlify/functions/generate-parody', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        url: analysisResult.value.url,
+        userId: user.value.id,
+        ...(testKey.value && { testKey: testKey.value }),
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to start generation')
+    }
+
+    const data = await response.json()
+    router.push(`/generate?id=${data.id}`)
+  } catch (e: any) {
+    console.error('Error starting generation:', e)
+    error.value = e.message || 'Failed to start generation. Please try again.'
+  } finally {
+    isGenerating.value = false
+  }
 }
 
 function scrollToTop() {
@@ -229,16 +271,23 @@ function scrollToTop() {
               </div>
             </div>
 
+            <!-- Error message -->
+            <div v-if="error" class="bg-red-100 text-red-700 p-4 rounded-xl mb-6">
+              {{ error }}
+            </div>
+
             <div class="flex gap-3">
               <button
                 @click="generateParody"
-                class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300"
+                :disabled="isGenerating"
+                class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all duration-300 disabled:opacity-50"
               >
-                {{ isSignedIn ? '🚀 Generate Now' : '🔐 Sign In to Generate' }}
+                {{ isGenerating ? '⏳ Generating...' : (isSignedIn ? '🚀 Generate Now' : '🔐 Sign In to Generate') }}
               </button>
               <button
                 @click="analysisResult = null; url = ''"
-                class="px-6 py-4 border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
+                :disabled="isGenerating"
+                class="px-6 py-4 border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
