@@ -31,12 +31,19 @@ export function isClaudeAPIDisabled(): boolean {
   return process.env.KILL_CLAUDE_API === 'true'
 }
 
+// Standard CORS headers for all responses
+const corsHeaders = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
 // Standard maintenance response
 export function maintenanceResponse() {
   return {
     statusCode: 503,
     headers: {
-      'Content-Type': 'application/json',
+      ...corsHeaders,
       'Retry-After': '300',
     },
     body: JSON.stringify({
@@ -51,7 +58,7 @@ export function capacityExceededResponse() {
   return {
     statusCode: 503,
     headers: {
-      'Content-Type': 'application/json',
+      ...corsHeaders,
       'Retry-After': '60',
     },
     body: JSON.stringify({
@@ -66,7 +73,7 @@ export function budgetExceededResponse() {
   return {
     statusCode: 503,
     headers: {
-      'Content-Type': 'application/json',
+      ...corsHeaders,
       'Retry-After': '3600',
     },
     body: JSON.stringify({
