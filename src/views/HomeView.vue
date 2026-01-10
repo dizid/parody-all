@@ -39,11 +39,11 @@ onMounted(() => {
 
 const siteTypeInfo: Record<SiteType, { icon: string; name: string; description: string }> = {
   ecommerce: { icon: '🛒', name: 'E-Commerce', description: 'Absurd products, impossible delivery times, and fees that make you question reality' },
-  travel: { icon: '✈️', name: 'Travel', description: 'Places NOT to visit, trap ratings, and reviews that are 5-stars despite the horror' },
-  social: { icon: '👥', name: 'Social Media', description: 'Fake trending topics, satirical influencers, and absurd engagement metrics' },
-  booking: { icon: '📅', name: 'Booking', description: 'Ridiculous availability, hidden fees, and reviews written by bots' },
-  news: { icon: '📰', name: 'News/Media', description: 'Headlines so absurd they might actually be real' },
-  other: { icon: '🌐', name: 'General Website', description: 'Custom parody tailored to the site content' },
+  news: { icon: '📰', name: 'News/Media', description: 'Clickbait headlines, paywalls for everything, and ads disguised as articles' },
+  travel: { icon: '✈️', name: 'Travel/Booking', description: 'Places NOT to visit, fake urgency, and fees revealed at checkout' },
+  social: { icon: '👥', name: 'Social Media', description: 'Algorithm jokes, engagement bait, and verified checkmarks for $8' },
+  corporate: { icon: '🏢', name: 'Corporate/SaaS', description: 'Buzzword bingo, vague promises, and "Contact Sales" pricing' },
+  food: { icon: '🍔', name: 'Food/Delivery', description: 'Fee stacking, tiny portions, and delivery times that are pure fiction' },
 }
 
 const exampleParodies = [
@@ -64,14 +64,20 @@ async function analyzeUrl() {
     await new Promise(resolve => setTimeout(resolve, 1500))
 
     const urlLower = url.value.toLowerCase()
-    let siteType: SiteType = 'other'
+    let siteType: SiteType = 'ecommerce'  // default
 
-    if (urlLower.includes('amazon') || urlLower.includes('shop') || urlLower.includes('store') || urlLower.includes('buy') || urlLower.includes('ebay')) {
+    if (urlLower.includes('amazon') || urlLower.includes('shop') || urlLower.includes('store') || urlLower.includes('buy') || urlLower.includes('ebay') || urlLower.includes('etsy')) {
       siteType = 'ecommerce'
+    } else if (urlLower.includes('cnn') || urlLower.includes('news') || urlLower.includes('nytimes') || urlLower.includes('bbc') || urlLower.includes('buzzfeed') || urlLower.includes('medium')) {
+      siteType = 'news'
     } else if (urlLower.includes('trip') || urlLower.includes('travel') || urlLower.includes('booking') || urlLower.includes('hotel') || urlLower.includes('expedia') || urlLower.includes('airbnb')) {
       siteType = 'travel'
-    } else if (urlLower.includes('twitter') || urlLower.includes('facebook') || urlLower.includes('instagram') || urlLower.includes('tiktok') || urlLower.includes('linkedin')) {
+    } else if (urlLower.includes('twitter') || urlLower.includes('facebook') || urlLower.includes('instagram') || urlLower.includes('tiktok') || urlLower.includes('linkedin') || urlLower.includes('x.com')) {
       siteType = 'social'
+    } else if (urlLower.includes('stripe') || urlLower.includes('salesforce') || urlLower.includes('hubspot') || urlLower.includes('slack') || urlLower.includes('notion') || urlLower.includes('.io')) {
+      siteType = 'corporate'
+    } else if (urlLower.includes('doordash') || urlLower.includes('ubereats') || urlLower.includes('grubhub') || urlLower.includes('food') || urlLower.includes('restaurant')) {
+      siteType = 'food'
     }
 
     analysisResult.value = {
@@ -105,7 +111,7 @@ async function generateParody() {
   try {
     const token = await getToken.value()
 
-    const response = await fetch('/.netlify/functions/generate-parody', {
+    const response = await fetch('/.netlify/functions/generate-parody-background', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

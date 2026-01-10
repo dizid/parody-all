@@ -150,7 +150,7 @@ async function startGeneration() {
   try {
     const token = await getToken.value()
 
-    const response = await fetch('/.netlify/functions/generate-parody', {
+    const response = await fetch('/.netlify/functions/generate-parody-background', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -239,7 +239,7 @@ function getStatusBadge(status: string) {
     <!-- Create New Parody -->
     <div class="rounded-2xl shadow-lg p-6 mb-8" style="background-color: var(--color-bg-card);">
       <h2 class="text-xl font-semibold mb-4" style="color: var(--color-text-primary);">Create New Parody</h2>
-      <form @submit.prevent="startGeneration" class="flex gap-4">
+      <form @submit.prevent="startGeneration" class="flex flex-col sm:flex-row gap-3">
         <input
           v-model="url"
           type="text"
@@ -250,7 +250,7 @@ function getStatusBadge(status: string) {
         <button
           type="submit"
           :disabled="isGenerating || !url || (!canGenerate && !testKey)"
-          class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-50 transition-all"
+          class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-50 transition-all whitespace-nowrap"
         >
           {{ isGenerating ? 'Starting...' : (canGenerate || testKey) ? 'Generate Parody' : 'No Credits' }}
         </button>
@@ -275,20 +275,29 @@ function getStatusBadge(status: string) {
         <div
           v-for="parody in parodies"
           :key="parody.id"
-          class="rounded-xl p-4 flex items-center justify-between hover:border-purple-300 transition-colors"
+          class="rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-purple-300 transition-colors"
           style="border: 1px solid var(--color-border);"
         >
-          <div>
-            <h3 class="font-semibold" style="color: var(--color-text-primary);">{{ parody.parody_name }}</h3>
-            <p class="text-sm" style="color: var(--color-text-secondary);">{{ parody.original_url }}</p>
+          <div class="min-w-0 flex-1">
+            <h3 class="font-semibold truncate" style="color: var(--color-text-primary);">{{ parody.parody_name }}</h3>
+            <a
+              :href="parody.original_url.startsWith('http') ? parody.original_url : `https://${parody.original_url}`"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-sm hover:underline truncate block"
+              style="color: var(--color-text-secondary);"
+              @click.stop
+            >
+              {{ parody.original_url }}
+            </a>
             <p class="text-xs mt-1" style="color: var(--color-text-secondary); opacity: 0.7;">
               {{ new Date(parody.created_at).toLocaleDateString() }}
             </p>
           </div>
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3 flex-shrink-0">
             <span
               :class="[
-                'px-3 py-1 rounded-full text-sm font-medium',
+                'px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap',
                 getStatusBadge(parody.status).class
               ]"
             >
@@ -297,7 +306,7 @@ function getStatusBadge(status: string) {
             <RouterLink
               v-if="parody.status === 'complete' && parody.slug"
               :to="`/p/${parody.slug}`"
-              class="text-purple-600 hover:underline"
+              class="text-purple-600 hover:underline whitespace-nowrap"
             >
               View →
             </RouterLink>

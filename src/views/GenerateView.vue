@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Parody } from '../types'
 
@@ -11,8 +11,16 @@ const loading = ref(true)
 const error = ref('')
 const pollCount = ref(0)
 
-const MAX_POLLS = 40 // 40 polls * 3 seconds = 2 minutes max wait
-const STUCK_THRESHOLD_MS = 2 * 60 * 1000 // 2 minutes
+// Email notification state
+const elapsedSeconds = ref(0)
+const showEmailCapture = computed(() => elapsedSeconds.value >= 60 && !emailSubmitted.value)
+const notificationEmail = ref('')
+const emailSubmitted = ref(false)
+const emailSubmitting = ref(false)
+const emailError = ref('')
+
+const MAX_POLLS = 120 // Allow longer polling since we have email capture
+const STUCK_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes before showing stuck message
 
 const steps = [
   { id: 'analyzing', label: 'Analyzing Website', icon: '🔍' },
@@ -21,15 +29,23 @@ const steps = [
 ]
 
 let pollInterval: number | null = null
+let elapsedInterval: number | null = null
 
 onMounted(async () => {
   await fetchParody()
   startPolling()
+  // Track elapsed time
+  elapsedInterval = window.setInterval(() => {
+    elapsedSeconds.value++
+  }, 1000)
 })
 
 onUnmounted(() => {
   if (pollInterval) {
     clearInterval(pollInterval)
+  }
+  if (elapsedInterval) {
+    clearInterval(elapsedInterval)
   }
 })
 
@@ -90,6 +106,35 @@ function getCurrentStep() {
   if (!parody.value) return 0
   const idx = steps.findIndex(s => s.id === parody.value!.status)
   return idx >= 0 ? idx : 0
+}
+
+async function submitEmail() {
+  if (!notificationEmail.value || !parody.value) return
+
+  emailSubmitting.value = true
+  emailError.value = ''
+
+  try {
+    const response = await fetch('/.netlify/functions/save-notification-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        parodyId: parody.value.id,
+        email: notificationEmail.value,
+      }),
+    })
+
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error(data.error || 'Failed to save email')
+    }
+
+    emailSubmitted.value = true
+  } catch (e: any) {
+    emailError.value = e.message || 'Failed to save email. Please try again.'
+  } finally {
+    emailSubmitting.value = false
+  }
 }
 </script>
 
@@ -162,7 +207,50 @@ function getCurrentStep() {
             <div class="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
             <div class="w-3 h-3 bg-purple-600 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
           </div>
-          <p class="mt-4 text-sm" style="color: var(--color-text-secondary);">
+
+          <!-- Email capture after 60 seconds -->
+          <div v-if="showEmailCapture" class="mt-6 p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20">
+            <p class="text-purple-700 dark:text-purple-300 font-medium mb-2">Taking longer than expected...</p>
+            <p class="text-sm mb-4" style="color: var(--color-text-secondary);">
+              Enter your email and we'll notify you when it's ready. You can close this page.
+            </p>
+            <form @submit.prevent="submitEmail" class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+              <input
+                v-model="notificationEmail"
+                type="email"
+                placeholder="your@email.com"
+                required
+                class="flex-1 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                style="background-color: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--color-text-primary);"
+              />
+              <button
+                type="submit"
+                :disabled="emailSubmitting || !notificationEmail"
+                class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg font-medium hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-50 transition-all whitespace-nowrap"
+              >
+                {{ emailSubmitting ? 'Saving...' : 'Notify Me' }}
+              </button>
+            </form>
+            <p v-if="emailError" class="text-red-500 text-sm mt-2">{{ emailError }}</p>
+          </div>
+
+          <!-- Email submitted confirmation -->
+          <div v-else-if="emailSubmitted" class="mt-6 p-4 rounded-xl bg-green-50 dark:bg-green-900/20">
+            <p class="text-green-700 dark:text-green-300 font-medium">You're all set!</p>
+            <p class="text-sm mt-1" style="color: var(--color-text-secondary);">
+              We'll email you at <strong>{{ notificationEmail }}</strong> when your parody is ready.
+              <br />You can safely close this page.
+            </p>
+            <RouterLink
+              to="/dashboard"
+              class="inline-block mt-4 text-purple-600 hover:underline"
+            >
+              Back to Dashboard
+            </RouterLink>
+          </div>
+
+          <!-- Regular waiting message (first 60 seconds) -->
+          <p v-else class="mt-4 text-sm" style="color: var(--color-text-secondary);">
             This usually takes 30-60 seconds. Don't close this page.
           </p>
         </div>

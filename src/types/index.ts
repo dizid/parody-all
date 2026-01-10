@@ -66,31 +66,47 @@ export const PRICING_TIERS = {
 } as const
 
 export interface ParodyData {
-  // Content sections
-  products?: Product[]
-  destinations?: Destination[]
+  // === SHARED CONTENT (all site types) ===
+  heroTagline?: string
+  heroSubtitle?: string
+  announcements?: Announcement[]
+  popups?: Popup[]
+  easterEggs?: EasterEgg[]
+  trustBadges?: TrustBadge[]
+  faqs?: FAQ[]
+  reviews?: Review[]
   fees?: Fee[]
+
+  // === ECOMMERCE ===
+  products?: Product[]
   categories?: Category[]
   deliveryOptions?: DeliveryOption[]
   paymentMethods?: PaymentMethod[]
-  reviews?: Review[]
 
-  // Hero section
-  heroTagline?: string
-  heroSubtitle?: string
+  // === NEWS ===
+  articles?: Article[]
+  breakingNews?: string  // Ticker text
+  sponsoredContent?: Article[]
 
-  // Interactive elements
-  popups?: Popup[]
-  announcements?: Announcement[]
-  easterEggs?: EasterEgg[]
+  // === TRAVEL ===
+  destinations?: Destination[]
+  urgencyMessages?: string[]  // "Only 2 left at this price!"
 
-  // Fake FAQ
-  faqs?: FAQ[]
+  // === SOCIAL ===
+  posts?: Post[]
+  suggestedProfiles?: SuggestedProfile[]
+  trending?: string[]  // Hashtags
 
-  // Trust badges (fake)
-  trustBadges?: TrustBadge[]
+  // === CORPORATE ===
+  features?: Feature[]
+  pricingTiers?: PricingTier[]
+  testimonials?: Testimonial[]
 
-  // Section visibility flags
+  // === FOOD ===
+  menuItems?: MenuItem[]
+  deliveryFees?: Fee[]
+
+  // Section visibility flags (legacy, kept for compatibility)
   hasProducts?: boolean
   hasDestinations?: boolean
   hasFeed?: boolean
@@ -227,7 +243,85 @@ export interface TrustBadge {
   tooltip?: string
 }
 
-export type SiteType = 'ecommerce' | 'travel' | 'social' | 'booking' | 'news' | 'other'
+export type SiteType = 'ecommerce' | 'travel' | 'social' | 'news' | 'corporate' | 'food'
+
+// NEWS - Articles and headlines
+export interface Article {
+  id: string
+  headline: string
+  category: string  // "POLITICS", "TECH", "OPINION", "BREAKING"
+  summary: string
+  author: string
+  authorTitle?: string  // "Senior Clickbait Correspondent"
+  image: string
+  readTime: string
+  commentCount: number
+  isBreaking?: boolean
+  isSponsored?: boolean
+}
+
+// SOCIAL - Posts and profiles
+export interface Post {
+  id: string
+  author: string
+  handle: string
+  avatar: string
+  content: string
+  likes: number
+  reposts: number
+  comments: number
+  timestamp: string
+  isVerified?: boolean
+  isPromoted?: boolean
+}
+
+export interface SuggestedProfile {
+  id: string
+  name: string
+  handle: string
+  avatar: string
+  bio: string
+  isVerified?: boolean
+}
+
+// CORPORATE - SaaS landing pages
+export interface Feature {
+  id: string
+  icon: string
+  title: string
+  description: string  // Buzzword-laden nonsense
+}
+
+export interface PricingTier {
+  id: string
+  name: string
+  price: string  // "$999/mo" or "Contact Sales"
+  period?: string  // "/month", "/year"
+  features: string[]
+  isPopular?: boolean
+  ctaText: string
+}
+
+export interface Testimonial {
+  id: string
+  quote: string
+  author: string
+  title: string
+  company: string
+  avatar: string
+}
+
+// FOOD - Menu items and delivery
+export interface MenuItem {
+  id: string
+  name: string
+  description: string
+  price: number
+  image: string
+  prepTime: string
+  calories?: string
+  badges?: string[]  // "Popular", "New", "Probably Fresh"
+}
 
 export interface AnalysisResult {
   url: string
