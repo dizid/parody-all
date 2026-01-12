@@ -3,7 +3,15 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
-import { PRICING_TIERS, type AnalysisResult, type SiteType } from '../types'
+import {
+  PRICING_TIERS,
+  PARODY_TONES,
+  PARODY_THEMES,
+  type AnalysisResult,
+  type SiteType,
+  type ParodyTone,
+  type ParodyTheme
+} from '../types'
 
 const router = useRouter()
 const route = useRoute()
@@ -20,6 +28,10 @@ const isGenerating = ref(false)
 const analysisResult = ref<AnalysisResult | null>(null)
 const error = ref('')
 const animatedCount = ref(0)
+
+// Customization options
+const selectedTone = ref<ParodyTone>('negative')
+const selectedTheme = ref<ParodyTheme>('default')
 
 // Animated counter on mount
 onMounted(() => {
@@ -119,6 +131,8 @@ async function generateParody() {
       body: JSON.stringify({
         url: analysisResult.value.url,
         userId: user.value.id,
+        tone: selectedTone.value,
+        theme: selectedTheme.value,
         ...(testKey.value && { testKey: testKey.value }),
       }),
     })
@@ -141,6 +155,31 @@ async function generateParody() {
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
+
+// Tone helper functions for UI styling
+function getToneSelectedClass(tone: ParodyTone): string {
+  const classes: Record<ParodyTone, string> = {
+    negative: 'border-red-500 bg-red-50 ring-2 ring-red-200',
+    positive: 'border-green-500 bg-green-50 ring-2 ring-green-200',
+    balanced: 'border-gray-500 bg-gray-50 ring-2 ring-gray-200',
+    erotic: 'border-pink-500 bg-pink-50 ring-2 ring-pink-200',
+  }
+  return classes[tone]
+}
+
+// Theme helper functions for UI styling
+function getThemeSelectedClass(theme: ParodyTheme): string {
+  const classes: Record<ParodyTheme, string> = {
+    default: 'border-purple-500 bg-purple-50 ring-2 ring-purple-200',
+    christmas: 'border-red-500 bg-red-50 ring-2 ring-red-200',
+    easter: 'border-pink-400 bg-pink-50 ring-2 ring-pink-200',
+    sport: 'border-blue-500 bg-blue-50 ring-2 ring-blue-200',
+    sensual: 'border-rose-500 bg-rose-50 ring-2 ring-rose-200',
+    retro: 'border-orange-500 bg-orange-50 ring-2 ring-orange-200',
+  }
+  return classes[theme]
+}
+
 </script>
 
 <template>
@@ -273,6 +312,43 @@ function scrollToTop() {
               <div class="flex items-center gap-3 text-gray-600">
                 <span class="text-green-500">✓</span>
                 <span>{{ isSignedIn ? 'Ready in ~30 seconds' : 'Sign in to generate' }}</span>
+              </div>
+            </div>
+
+            <!-- Customization Section -->
+            <div class="border-t border-gray-100 pt-4 mt-4 mb-6 space-y-4">
+              <!-- Tone Selector -->
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-2">Tone</label>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="(config, tone) in PARODY_TONES"
+                    :key="tone"
+                    @click="selectedTone = tone as ParodyTone"
+                    class="px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 text-sm"
+                    :class="selectedTone === tone ? getToneSelectedClass(tone as ParodyTone) : 'border-gray-200 hover:border-gray-300 bg-white'"
+                  >
+                    <span class="text-sm">{{ config.icon }}</span>
+                    <span>{{ config.label }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Theme Selector -->
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-2">Theme</label>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="(config, theme) in PARODY_THEMES"
+                    :key="theme"
+                    @click="selectedTheme = theme as ParodyTheme"
+                    class="px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 text-sm"
+                    :class="selectedTheme === theme ? getThemeSelectedClass(theme as ParodyTheme) : 'border-gray-200 hover:border-gray-300 bg-white'"
+                  >
+                    <span class="text-sm">{{ config.icon }}</span>
+                    <span>{{ config.label }}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
