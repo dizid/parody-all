@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import type { Parody, ParodyData, ParodyConfig, Product } from '../types'
+import type { Parody, ParodyData, ParodyConfig, Product, ParodyTheme, ParodyTone } from '../types'
 import { useParodyInteractions } from '../composables/useParodyInteractions'
 import ParodyBacklink from '../components/ParodyBacklink.vue'
 import ParodyHeader from '../components/parody/ParodyHeader.vue'
 import ParodyPopup from '../components/parody/ParodyPopup.vue'
+import ShareModal from '../components/ShareModal.vue'
 import ProductCard from '../components/parody/ProductCard.vue'
 import ParodyReviews from '../components/parody/ParodyReviews.vue'
 import FeeCalculator from '../components/parody/FeeCalculator.vue'
@@ -17,6 +18,7 @@ const parody = ref<Parody | null>(null)
 const loading = ref(true)
 const error = ref('')
 const isExpired = ref(false)
+const showShareModal = ref(false)
 
 // Interactions
 const {
@@ -56,10 +58,61 @@ const parodyConfig = computed<ParodyConfig | null>(() => {
   return parody.value.parody_config as ParodyConfig
 })
 
+// Share URL for the modal
+const shareUrl = computed(() => {
+  if (typeof window !== 'undefined') {
+    return window.location.href
+  }
+  return ''
+})
+
 // Cart subtotal (before fees)
 const cartSubtotal = computed(() =>
   cartItems.value.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
 )
+
+// Theme-specific CSS variables
+const themeColors: Record<ParodyTheme, { accent: string; secondary: string; glow: string }> = {
+  default: { accent: '#7c3aed', secondary: '#ec4899', glow: 'rgba(124, 58, 237, 0.3)' },
+  christmas: { accent: '#dc2626', secondary: '#16a34a', glow: 'rgba(220, 38, 38, 0.3)' },
+  easter: { accent: '#ec4899', secondary: '#a855f7', glow: 'rgba(236, 72, 153, 0.3)' },
+  sport: { accent: '#1d4ed8', secondary: '#dc2626', glow: 'rgba(29, 78, 216, 0.3)' },
+  sensual: { accent: '#991b1b', secondary: '#1f1f1f', glow: 'rgba(153, 27, 27, 0.3)' },
+  retro: { accent: '#ea580c', secondary: '#854d0e', glow: 'rgba(234, 88, 12, 0.3)' },
+}
+
+// Tone-specific visual styles
+const toneStyles: Record<ParodyTone, { badge: string; cardShadow: string; bgTint: string }> = {
+  negative: { badge: '#ef4444', cardShadow: 'rgba(239, 68, 68, 0.2)', bgTint: 'rgba(127, 29, 29, 0.03)' },
+  positive: { badge: '#22c55e', cardShadow: 'rgba(34, 197, 94, 0.2)', bgTint: 'rgba(34, 197, 94, 0.03)' },
+  balanced: { badge: '#6b7280', cardShadow: 'rgba(107, 114, 128, 0.15)', bgTint: 'rgba(107, 114, 128, 0.02)' },
+  erotic: { badge: '#be185d', cardShadow: 'rgba(190, 24, 93, 0.2)', bgTint: 'rgba(190, 24, 93, 0.03)' },
+}
+
+const themeStyles = computed(() => {
+  const theme = (parody.value?.theme as ParodyTheme) || 'default'
+  const colors = themeColors[theme] || themeColors.default
+  const tone = (parody.value?.tone as ParodyTone) || 'negative'
+  const toneConfig = toneStyles[tone] || toneStyles.negative
+  return {
+    '--theme-accent': colors.accent,
+    '--theme-secondary': colors.secondary,
+    '--theme-glow': colors.glow,
+    '--tone-badge': toneConfig.badge,
+    '--tone-card-shadow': toneConfig.cardShadow,
+    '--tone-bg-tint': toneConfig.bgTint,
+  }
+})
+
+const themeClass = computed(() => {
+  const theme = parody.value?.theme || 'default'
+  return `theme-${theme}`
+})
+
+const toneClass = computed(() => {
+  const tone = parody.value?.tone || 'negative'
+  return `tone-${tone}`
+})
 
 onMounted(async () => {
   await fetchParody()
@@ -142,11 +195,35 @@ function handleAddToCart(product: Product) {
 
 function handleLogoClickEvent() {
   handleLogoClick(parodyData.value?.easterEggs)
+  // Also trigger logo click popup on first click
+  triggerPopup('logo_click', parodyData.value?.popups)
 }
 
-function shareParody() {
-  navigator.clipboard.writeText(window.location.href)
-  alert('Link copied! Now spread the chaos!')
+function handleSearchClick() {
+  triggerPopup('search_click', parodyData.value?.popups)
+}
+
+function handleCartClick() {
+  cartOpen.value = !cartOpen.value
+  triggerPopup('cart_click', parodyData.value?.popups)
+}
+
+async function shareParody() {
+  // Try native share first (mobile/modern browsers)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        url: window.location.href,
+        title: parody.value?.parody_name || 'Check out this parody!',
+        text: 'Check out this hilarious parody!'
+      })
+      return
+    } catch {
+      // User cancelled or error - fall through to modal
+    }
+  }
+  // Fallback: show share modal
+  showShareModal.value = true
 }
 </script>
 
@@ -154,8 +231,8 @@ function shareParody() {
   <!-- Full-page parody view -->
   <div
     class="min-h-screen transition-all duration-300"
-    :class="{ 'animate-glitch': glitchMode }"
-    style="background-color: var(--color-bg-secondary);"
+    :class="[themeClass, toneClass, { 'animate-glitch': glitchMode }]"
+    :style="{ ...themeStyles, backgroundColor: 'var(--color-bg-secondary)' }"
   >
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center min-h-screen">
@@ -197,6 +274,53 @@ function shareParody() {
 
     <!-- Parody Content -->
     <div v-else-if="parody && parodyConfig">
+      <!-- Theme Decorations Layer -->
+      <div class="themed-decorations pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <!-- Christmas: Snowflakes -->
+        <template v-if="parody.theme === 'christmas'">
+          <div class="snowflake" style="left: 5%; animation-delay: 0s;">❄️</div>
+          <div class="snowflake" style="left: 15%; animation-delay: 1s;">❅</div>
+          <div class="snowflake" style="left: 25%; animation-delay: 2s;">❄️</div>
+          <div class="snowflake" style="left: 45%; animation-delay: 0.5s;">❅</div>
+          <div class="snowflake" style="left: 65%; animation-delay: 1.5s;">❄️</div>
+          <div class="snowflake" style="left: 85%; animation-delay: 2.5s;">❅</div>
+          <div class="snowflake" style="left: 95%; animation-delay: 0.7s;">❄️</div>
+        </template>
+
+        <!-- Easter: Floating eggs -->
+        <template v-if="parody.theme === 'easter'">
+          <div class="easter-egg" style="left: 8%; top: 20%;">🥚</div>
+          <div class="easter-egg" style="left: 92%; top: 35%;">🐣</div>
+          <div class="easter-egg" style="left: 5%; top: 60%;">🌸</div>
+          <div class="easter-egg" style="left: 88%; top: 75%;">🐰</div>
+          <div class="easter-egg" style="left: 12%; top: 85%;">🌷</div>
+        </template>
+
+        <!-- Sport: Stadium stripes -->
+        <template v-if="parody.theme === 'sport'">
+          <div class="sport-stripe sport-stripe-1"></div>
+          <div class="sport-stripe sport-stripe-2"></div>
+          <div class="scoreboard-corner">
+            <span class="scoreboard-text">GAME ON</span>
+          </div>
+        </template>
+
+        <!-- Sensual: Soft vignette overlay -->
+        <template v-if="parody.theme === 'sensual'">
+          <div class="sensual-vignette"></div>
+          <div class="sensual-glow"></div>
+        </template>
+
+        <!-- Retro: Starburst elements -->
+        <template v-if="parody.theme === 'retro'">
+          <div class="retro-starburst" style="top: 10%; right: 5%;">✦</div>
+          <div class="retro-starburst" style="bottom: 20%; left: 3%;">★</div>
+          <div class="retro-starburst" style="top: 40%; left: 2%;">✧</div>
+          <div class="retro-starburst" style="bottom: 40%; right: 4%;">✦</div>
+          <div class="retro-dots"></div>
+        </template>
+      </div>
+
       <!-- Promotional Backlink Banner -->
       <ParodyBacklink
         :size="parody.backlink_size || 'large'"
@@ -205,7 +329,7 @@ function shareParody() {
 
       <!-- Parody Notice Banner -->
       <div class="bg-pink-500 text-white text-center py-2 text-sm flex items-center justify-center gap-4 flex-wrap">
-        <span>🎭 This is a parody of {{ parody.original_url }} - For entertainment only!</span>
+        <span>🎭 This is a parody of <a :href="parody.original_url" target="_blank" rel="noopener" class="underline hover:text-white/80">{{ parody.original_url }}</a> - For entertainment only!</span>
         <button
           @click="shareParody"
           class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs font-medium transition-colors"
@@ -224,7 +348,8 @@ function shareParody() {
         :cart-item-count="cartItemCount"
         :logo-click-count="logoClickCount"
         @logo-click="handleLogoClickEvent"
-        @cart-click="cartOpen = !cartOpen"
+        @cart-click="handleCartClick"
+        @search-click="handleSearchClick"
       />
 
       <!-- Easter Egg Message -->
@@ -738,6 +863,15 @@ function shareParody() {
       @close="closePopup"
       @button-click="handlePopupButton"
     />
+
+    <!-- Share Modal -->
+    <ShareModal
+      v-if="parody"
+      :visible="showShareModal"
+      :url="shareUrl"
+      :title="parody.parody_name"
+      @close="showShareModal = false"
+    />
   </div>
 </template>
 
@@ -808,5 +942,397 @@ function shareParody() {
   100% {
     transform: translateX(-50%);
   }
+}
+
+/* ===== THEME STYLES ===== */
+
+/* Christmas theme */
+.theme-christmas :deep(.bg-gradient-to-r) {
+  --tw-gradient-from: #dc2626 !important;
+  --tw-gradient-to: #16a34a !important;
+}
+
+.theme-christmas :deep(.bg-purple-600) {
+  background-color: #dc2626 !important;
+}
+
+.theme-christmas :deep(.text-purple-600) {
+  color: #dc2626 !important;
+}
+
+.theme-christmas :deep(.ring-purple-500) {
+  --tw-ring-color: #dc2626 !important;
+}
+
+/* Easter theme */
+.theme-easter :deep(.bg-gradient-to-r) {
+  --tw-gradient-from: #ec4899 !important;
+  --tw-gradient-to: #a855f7 !important;
+}
+
+.theme-easter :deep(.bg-purple-600) {
+  background-color: #ec4899 !important;
+}
+
+.theme-easter :deep(.text-purple-600) {
+  color: #ec4899 !important;
+}
+
+.theme-easter :deep(.ring-purple-500) {
+  --tw-ring-color: #ec4899 !important;
+}
+
+/* Sport theme */
+.theme-sport :deep(.bg-gradient-to-r) {
+  --tw-gradient-from: #1d4ed8 !important;
+  --tw-gradient-to: #dc2626 !important;
+}
+
+.theme-sport :deep(.bg-purple-600) {
+  background-color: #1d4ed8 !important;
+}
+
+.theme-sport :deep(.text-purple-600) {
+  color: #1d4ed8 !important;
+}
+
+.theme-sport :deep(.ring-purple-500) {
+  --tw-ring-color: #1d4ed8 !important;
+}
+
+/* Sensual theme */
+.theme-sensual :deep(.bg-gradient-to-r) {
+  --tw-gradient-from: #991b1b !important;
+  --tw-gradient-to: #1f1f1f !important;
+}
+
+.theme-sensual :deep(.bg-purple-600) {
+  background-color: #991b1b !important;
+}
+
+.theme-sensual :deep(.text-purple-600) {
+  color: #991b1b !important;
+}
+
+.theme-sensual :deep(.ring-purple-500) {
+  --tw-ring-color: #991b1b !important;
+}
+
+.theme-sensual :deep(.bg-pink-500) {
+  background-color: #991b1b !important;
+}
+
+/* Retro theme */
+.theme-retro :deep(.bg-gradient-to-r) {
+  --tw-gradient-from: #ea580c !important;
+  --tw-gradient-to: #854d0e !important;
+}
+
+.theme-retro :deep(.bg-purple-600) {
+  background-color: #ea580c !important;
+}
+
+.theme-retro :deep(.text-purple-600) {
+  color: #ea580c !important;
+}
+
+.theme-retro :deep(.ring-purple-500) {
+  --tw-ring-color: #ea580c !important;
+}
+
+.theme-retro :deep(.bg-pink-500) {
+  background-color: #854d0e !important;
+}
+
+/* ===== TONE STYLES ===== */
+
+/* Negative tone - Dark, exposé-style with warning elements */
+.tone-negative {
+  --tone-indicator: #ef4444;
+}
+
+.tone-negative :deep(.bg-white) {
+  box-shadow: 0 2px 8px var(--tone-card-shadow), inset 0 0 0 1px rgba(239, 68, 68, 0.05);
+}
+
+.tone-negative :deep(.rounded-xl) {
+  position: relative;
+}
+
+.tone-negative :deep(.text-yellow-600),
+.tone-negative :deep(.text-amber-600) {
+  color: #dc2626 !important;
+}
+
+/* Positive tone - Bright, sparkly, suspiciously perfect */
+.tone-positive {
+  --tone-indicator: #22c55e;
+}
+
+.tone-positive :deep(.bg-white) {
+  box-shadow: 0 2px 12px var(--tone-card-shadow), 0 0 20px rgba(34, 197, 94, 0.1);
+}
+
+.tone-positive :deep(.text-yellow-500) {
+  color: #fbbf24 !important;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+}
+
+.tone-positive :deep(.bg-gradient-to-r) {
+  filter: saturate(1.2) brightness(1.05);
+}
+
+/* Balanced tone - Muted, professional, realistic */
+.tone-balanced {
+  --tone-indicator: #6b7280;
+}
+
+.tone-balanced :deep(.bg-white) {
+  box-shadow: 0 1px 4px var(--tone-card-shadow);
+}
+
+.tone-balanced :deep(.text-purple-600) {
+  color: #4b5563 !important;
+}
+
+.tone-balanced :deep(.bg-gradient-to-r) {
+  filter: saturate(0.85);
+}
+
+.tone-balanced :deep(.bg-purple-600) {
+  background-color: #4b5563 !important;
+}
+
+/* Erotic tone - Sensual, mysterious, romantic */
+.tone-erotic {
+  --tone-indicator: #be185d;
+}
+
+.tone-erotic :deep(.bg-white) {
+  box-shadow: 0 4px 16px var(--tone-card-shadow), 0 0 30px rgba(190, 24, 93, 0.08);
+}
+
+.tone-erotic :deep(.bg-gradient-to-r) {
+  --tw-gradient-from: #be185d !important;
+  --tw-gradient-to: #7c3aed !important;
+}
+
+.tone-erotic :deep(.bg-purple-600) {
+  background-color: #be185d !important;
+}
+
+.tone-erotic :deep(.text-purple-600) {
+  color: #be185d !important;
+}
+
+.tone-erotic :deep(.ring-purple-500) {
+  --tw-ring-color: #be185d !important;
+}
+
+.tone-erotic :deep(button:hover) {
+  transform: scale(1.02);
+  transition: transform 0.2s ease;
+}
+
+/* ===== THEMED DECORATIONS ===== */
+
+/* Christmas snowflakes */
+.snowflake {
+  position: absolute;
+  top: -50px;
+  font-size: 24px;
+  opacity: 0.6;
+  animation: snowfall 8s linear infinite;
+  z-index: 0;
+}
+
+@keyframes snowfall {
+  0% {
+    transform: translateY(-50px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Easter decorations */
+.easter-egg {
+  position: absolute;
+  font-size: 32px;
+  opacity: 0.3;
+  animation: easter-float 4s ease-in-out infinite;
+}
+
+.easter-egg:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.easter-egg:nth-child(3) {
+  animation-delay: 1s;
+}
+
+.easter-egg:nth-child(4) {
+  animation-delay: 1.5s;
+}
+
+.easter-egg:nth-child(5) {
+  animation-delay: 2s;
+}
+
+@keyframes easter-float {
+  0%, 100% {
+    transform: translateY(0) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(5deg);
+  }
+}
+
+/* Sport theme */
+.sport-stripe {
+  position: absolute;
+  height: 100%;
+  width: 8px;
+  opacity: 0.08;
+}
+
+.sport-stripe-1 {
+  left: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    #1d4ed8 0px,
+    #1d4ed8 20px,
+    transparent 20px,
+    transparent 40px
+  );
+}
+
+.sport-stripe-2 {
+  right: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    #dc2626 0px,
+    #dc2626 20px,
+    transparent 20px,
+    transparent 40px
+  );
+}
+
+.scoreboard-corner {
+  position: absolute;
+  top: 100px;
+  right: 20px;
+  background: linear-gradient(135deg, #1d4ed8, #dc2626);
+  padding: 8px 16px;
+  border-radius: 4px;
+  transform: rotate(3deg);
+  opacity: 0.15;
+}
+
+.scoreboard-text {
+  font-family: 'Impact', sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  color: white;
+  letter-spacing: 2px;
+}
+
+/* Sensual theme */
+.sensual-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(159, 18, 57, 0.08) 100%
+  );
+}
+
+.sensual-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80%;
+  height: 80%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(190, 24, 93, 0.03) 0%,
+    transparent 70%
+  );
+  filter: blur(40px);
+}
+
+/* Retro theme */
+.retro-starburst {
+  position: absolute;
+  font-size: 48px;
+  color: #ea580c;
+  opacity: 0.15;
+  animation: retro-pulse 2s ease-in-out infinite;
+}
+
+.retro-starburst:nth-child(2) {
+  animation-delay: 0.5s;
+  color: #facc15;
+}
+
+.retro-starburst:nth-child(3) {
+  animation-delay: 1s;
+  color: #84cc16;
+}
+
+.retro-starburst:nth-child(4) {
+  animation-delay: 1.5s;
+}
+
+@keyframes retro-pulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.15;
+  }
+  50% {
+    transform: scale(1.1) rotate(10deg);
+    opacity: 0.25;
+  }
+}
+
+.retro-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, #ea580c 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.03;
+}
+
+/* Theme-specific header gradients */
+.theme-christmas .bg-pink-500 {
+  background: linear-gradient(90deg, #dc2626 0%, #16a34a 50%, #dc2626 100%) !important;
+}
+
+.theme-easter .bg-pink-500 {
+  background: linear-gradient(90deg, #f9a8d4 0%, #a5f3fc 50%, #d9f99d 100%) !important;
+  color: #6b21a8 !important;
+}
+
+.theme-sport .bg-pink-500 {
+  background: linear-gradient(90deg, #1d4ed8 0%, #dc2626 100%) !important;
+}
+
+.theme-sensual .bg-pink-500 {
+  background: linear-gradient(90deg, #9f1239 0%, #1f1f1f 100%) !important;
+}
+
+.theme-retro .bg-pink-500 {
+  background: linear-gradient(90deg, #ea580c 0%, #facc15 50%, #84cc16 100%) !important;
+  color: #1f2937 !important;
 }
 </style>

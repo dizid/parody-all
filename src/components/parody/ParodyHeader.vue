@@ -15,6 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   logoClick: []
   cartClick: []
+  searchClick: []
   searchSubmit: [query: string]
 }>()
 
@@ -133,7 +134,7 @@ function handleBlur() {
               type="text"
               placeholder="Search for things you probably don't need..."
               class="w-full px-5 py-3 pr-12 rounded-xl bg-white/95 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-white/50 shadow-lg"
-              @focus="showSearch = true"
+              @focus="showSearch = true; emit('searchClick')"
               @blur="handleBlur"
               @keyup.enter="handleSearch"
             />

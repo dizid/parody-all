@@ -6,6 +6,53 @@ export interface CartItem {
   quantity: number
 }
 
+// Fallback popups when AI doesn't generate custom ones for these triggers
+const FALLBACK_POPUPS: Record<string, Popup> = {
+  search_click: {
+    id: 'search_fallback',
+    trigger: 'search_click',
+    title: '🔍 Search Feature',
+    message: "We already know what you want. We've been watching. But sure, type something anyway.",
+    icon: '👁️',
+    buttons: [
+      { label: 'I accept my fate', primary: true },
+      { label: 'This is fine', primary: false }
+    ]
+  },
+  cart_click: {
+    id: 'cart_fallback',
+    trigger: 'cart_click',
+    title: '🛒 Your Cart of Regret',
+    message: "Items in your cart are judging your life choices. They've formed a support group.",
+    icon: '💸',
+    buttons: [
+      { label: 'Add more regrets', primary: true },
+      { label: 'Face consequences', primary: false }
+    ]
+  },
+  nav_click: {
+    id: 'nav_fallback',
+    trigger: 'nav_click',
+    title: '🧭 Navigation',
+    message: "You want to go somewhere else? After everything we've been through? Fine. But we'll remember this.",
+    icon: '😢',
+    buttons: [
+      { label: 'Stay here forever', primary: true },
+      { label: 'Leave anyway', primary: false }
+    ]
+  },
+  logo_click: {
+    id: 'logo_fallback',
+    trigger: 'logo_click',
+    title: '🏠 Home Sweet Home',
+    message: "Clicking the logo to escape? Classic. We've added 3 items to your cart for trying.",
+    icon: '🏃',
+    buttons: [
+      { label: 'Accept punishment', primary: true }
+    ]
+  }
+}
+
 export function useParodyInteractions() {
   // Cart state
   const cartItems = ref<CartItem[]>([])
@@ -82,17 +129,24 @@ export function useParodyInteractions() {
 
   // Popup actions
   function triggerPopup(trigger: PopupTrigger, popups?: Popup[]) {
-    if (!popups) return
-
-    // Find matching popup that hasn't been triggered
-    const popup = popups.find(p =>
+    // Find matching popup that hasn't been triggered (from AI-generated popups)
+    const aiPopup = popups?.find(p =>
       p.trigger === trigger && !triggeredPopups.value.has(p.id)
     )
 
-    if (popup) {
-      activePopup.value = popup
+    if (aiPopup) {
+      activePopup.value = aiPopup
       popupVisible.value = true
-      triggeredPopups.value.add(popup.id)
+      triggeredPopups.value.add(aiPopup.id)
+      return
+    }
+
+    // Fall back to hardcoded funny messages for interactive elements
+    const fallback = FALLBACK_POPUPS[trigger]
+    if (fallback && !triggeredPopups.value.has(fallback.id)) {
+      activePopup.value = fallback
+      popupVisible.value = true
+      triggeredPopups.value.add(fallback.id)
     }
   }
 

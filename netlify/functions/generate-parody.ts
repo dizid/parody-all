@@ -55,7 +55,7 @@ const handler: Handler = async (event) => {
     }
 
     // Parse request body
-    const { url, userId, testKey } = JSON.parse(event.body || '{}')
+    const { url, userId, testKey, tone = 'negative', theme = 'default' } = JSON.parse(event.body || '{}')
 
     if (!url || !userId) {
       return {
@@ -124,8 +124,8 @@ const handler: Handler = async (event) => {
 
     // Create parody record with 'analyzing' status
     const parody = (await sql`
-      INSERT INTO parodies (user_id, slug, original_url, status, backlink_size)
-      VALUES (${userId}, ${slug}, ${url}, 'analyzing', ${profile.tier === 'pro' ? 'none' : profile.tier === 'creator' ? 'small' : 'large'})
+      INSERT INTO parodies (user_id, slug, original_url, status, backlink_size, tone, theme)
+      VALUES (${userId}, ${slug}, ${url}, 'analyzing', ${profile.tier === 'pro' ? 'none' : profile.tier === 'creator' ? 'small' : 'large'}, ${tone}, ${theme})
       RETURNING *
     `)[0]
 
@@ -143,7 +143,7 @@ const handler: Handler = async (event) => {
     fetch(`${siteUrl}/.netlify/functions/generate-parody-background`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ parodyId: parody.id, url }),
+      body: JSON.stringify({ parodyId: parody.id, url, tone, theme }),
     }).catch(err => {
       console.error('Failed to invoke background function:', err)
     })

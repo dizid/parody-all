@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Popup } from '../../types'
+import type { Popup, PopupButton } from '../../types'
 
 defineProps<{
   popup: Popup | null
@@ -10,6 +10,19 @@ const emit = defineEmits<{
   close: []
   buttonClick: [index: number]
 }>()
+
+// Helper to get button label (handles both string and PopupButton formats)
+function getButtonLabel(btn: string | PopupButton): string {
+  return typeof btn === 'string' ? btn : btn.label
+}
+
+// Helper to check if button is primary
+function isPrimaryButton(btn: string | PopupButton, index: number): boolean {
+  if (typeof btn === 'string') {
+    return index === 0 // First button is primary for string arrays
+  }
+  return btn.primary ?? index === 0
+}
 </script>
 
 <template>
@@ -48,12 +61,12 @@ const emit = defineEmits<{
               @click="emit('buttonClick', index)"
               :class="[
                 'px-6 py-3 rounded-xl font-semibold transition-all duration-200',
-                index === 0
+                isPrimaryButton(btn, index)
                   ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:shadow-purple-500/30 hover:scale-105'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 text-sm'
               ]"
             >
-              {{ btn }}
+              {{ getButtonLabel(btn) }}
             </button>
           </div>
 

@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@clerk/vue": "^1.17.7",
+    "@mendable/firecrawl-js": "^4.10.0",
     "@neondatabase/serverless": "^1.0.2",
     "pinia": "^3.0.4",
     "resend": "^6.7.0",

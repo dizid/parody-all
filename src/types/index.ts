@@ -3,6 +3,44 @@
 export type Tier = 'none' | 'single' | 'creator' | 'pro'
 export type BacklinkSize = 'large' | 'small' | 'none'
 
+// Parody customization options
+export type ParodyTone = 'positive' | 'negative' | 'balanced' | 'erotic'
+export type ParodyTheme = 'default' | 'christmas' | 'easter' | 'sport' | 'sensual' | 'retro'
+
+// Tone configuration for display
+export const PARODY_TONES: Record<ParodyTone, { icon: string; label: string; description: string }> = {
+  positive: {
+    icon: '😊',
+    label: 'Positive',
+    description: 'Exaggerate the good to absurd levels - "too perfect to be real"'
+  },
+  negative: {
+    icon: '😈',
+    label: 'Negative',
+    description: 'Expose dark patterns, hidden fees, and frustrations'
+  },
+  balanced: {
+    icon: '⚖️',
+    label: 'Balanced',
+    description: 'Mix of praise and criticism - satirical but fair'
+  },
+  erotic: {
+    icon: '🔥',
+    label: 'Erotic',
+    description: 'Seductive and steamy - innuendos everywhere'
+  },
+}
+
+// Theme configuration for display
+export const PARODY_THEMES: Record<ParodyTheme, { icon: string; label: string }> = {
+  default: { icon: '🎭', label: 'Default' },
+  christmas: { icon: '🎄', label: 'Kerst' },
+  easter: { icon: '🐰', label: 'Pasen' },
+  sport: { icon: '⚽', label: 'Sport' },
+  sensual: { icon: '💋', label: 'Sensueel' },
+  retro: { icon: '📺', label: 'Retro' },
+}
+
 export interface Profile {
   id: string
   tier: Tier
@@ -25,6 +63,8 @@ export interface Parody {
   status: 'analyzing' | 'generating' | 'complete' | 'failed'
   expires_at: string | null
   backlink_size: BacklinkSize
+  tone: ParodyTone
+  theme: ParodyTheme
   error_message?: string
   created_at: string
 }
@@ -193,13 +233,19 @@ export interface Review {
 }
 
 // Interactive popup types
-export type PopupTrigger = 'add_to_cart' | 'checkout' | 'exit_intent' | 'scroll_50' | 'timer_10s' | 'newsletter'
+export type PopupTrigger = 'add_to_cart' | 'checkout' | 'exit_intent' | 'scroll_50' | 'timer_10s' | 'newsletter' | 'search_click' | 'cart_click' | 'nav_click' | 'logo_click'
+
+export interface PopupButton {
+  label: string
+  primary?: boolean
+}
+
 export interface Popup {
   id: string
   trigger: PopupTrigger
   title: string
   message: string
-  buttons: string[]
+  buttons: string[] | PopupButton[]
   icon?: string
 }
 
