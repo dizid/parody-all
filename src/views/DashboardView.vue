@@ -218,6 +218,11 @@ async function startGeneration() {
   try {
     const token = await getToken.value()
 
+    if (!token) {
+      router.push('/login')
+      return
+    }
+
     const response = await fetch('/.netlify/functions/generate-parody', {
       method: 'POST',
       headers: {

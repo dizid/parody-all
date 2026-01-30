@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
 import {
@@ -14,9 +14,14 @@ import {
 } from '../types'
 
 const router = useRouter()
+const route = useRoute()
 const { isSignedIn } = useAuth()
 const { user } = useUser()
 const { getToken } = useClerkAuth()
+
+// Test mode - allows bypassing auth with ?test=<key>
+const testKey = computed(() => route.query.test as string | undefined)
+const isTestMode = computed(() => !!testKey.value)
 
 const url = ref('')
 const isAnalyzing = ref(false)
@@ -105,29 +110,41 @@ async function analyzeUrl() {
 }
 
 async function generateParody() {
-  if (!isSignedIn.value) {
+  // Skip auth check in test mode
+  if (!isTestMode.value && !isSignedIn.value) {
     router.push('/login')
     return
   }
 
-  if (!user.value || !analysisResult.value?.url) return
+  if (!analysisResult.value?.url) return
+  if (!isTestMode.value && !user.value) return
 
   isGenerating.value = true
   error.value = ''
 
   try {
-    const token = await getToken.value()
+    // Build headers - only include auth if not in test mode
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (!isTestMode.value) {
+      const token = await getToken.value()
+      if (!token) {
+        router.push('/login')
+        return
+      }
+      headers['Authorization'] = `Bearer ${token}`
+    }
 
     const response = await fetch('/.netlify/functions/generate-parody', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+      headers,
       body: JSON.stringify({
         url: analysisResult.value.url,
         tone: selectedTone.value,
         theme: selectedTheme.value,
+        ...(testKey.value && { testKey: testKey.value }),
       }),
     })
 

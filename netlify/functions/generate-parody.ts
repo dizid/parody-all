@@ -46,15 +46,25 @@ const handler: Handler = async (event) => {
   try {
     const sql = neon(process.env.DATABASE_URL!)
 
-    // Verify JWT and extract userId from token (don't trust client-provided userId)
-    const authResult = await verifyAuth(event.headers.authorization)
-    if (!authResult.authenticated) {
-      return unauthorizedResponse(headers, authResult.error)
-    }
-    const userId = authResult.userId
-
     // Parse request body
-    const { url, tone = 'negative', theme = 'default' } = JSON.parse(event.body || '{}')
+    const { url, tone = 'negative', theme = 'default', testKey } = JSON.parse(event.body || '{}')
+
+    // Test mode bypass - only works with valid TEST_BYPASS_KEY env var
+    const isTestMode = testKey && process.env.TEST_BYPASS_KEY && testKey === process.env.TEST_BYPASS_KEY
+    let userId: string
+
+    if (isTestMode) {
+      // Use a test user ID for test mode
+      userId = 'test-user-' + Date.now()
+      console.log('Test mode enabled, bypassing auth')
+    } else {
+      // Verify JWT and extract userId from token (don't trust client-provided userId)
+      const authResult = await verifyAuth(event.headers.authorization)
+      if (!authResult.authenticated) {
+        return unauthorizedResponse(headers, authResult.error)
+      }
+      userId = authResult.userId
+    }
 
     if (!url) {
       return {
@@ -91,50 +101,58 @@ const handler: Handler = async (event) => {
       }
     }
 
-    // Check rate limit (5 generations per hour per user)
-    const rateLimit = await checkUserRateLimit(userId, 'generate')
-    if (!rateLimit.allowed) {
-      return {
-        statusCode: 429,
-        headers: { ...headers, 'Retry-After': String(rateLimit.resetInSeconds) },
-        body: JSON.stringify({
-          error: 'Rate limit exceeded. Please wait before generating more parodies.',
-          retryAfter: rateLimit.resetInSeconds,
-        }),
+    // Skip rate limit and credit checks in test mode
+    let profile: { tier: string; parodies_limit: number; parodies_used: number } | null = null
+
+    if (!isTestMode) {
+      // Check rate limit (5 generations per hour per user)
+      const rateLimit = await checkUserRateLimit(userId, 'generate')
+      if (!rateLimit.allowed) {
+        return {
+          statusCode: 429,
+          headers: { ...headers, 'Retry-After': String(rateLimit.resetInSeconds) },
+          body: JSON.stringify({
+            error: 'Rate limit exceeded. Please wait before generating more parodies.',
+            retryAfter: rateLimit.resetInSeconds,
+          }),
+        }
       }
-    }
 
-    // Check concurrent generation capacity
-    const killSwitches = getKillSwitches()
-    const activeGens = await getActiveGenerations()
-    if (activeGens >= killSwitches.MAX_CONCURRENT_GENERATIONS) {
-      return capacityExceededResponse()
-    }
+      // Check concurrent generation capacity
+      const killSwitches = getKillSwitches()
+      const activeGens = await getActiveGenerations()
+      if (activeGens >= killSwitches.MAX_CONCURRENT_GENERATIONS) {
+        return capacityExceededResponse()
+      }
 
-    // Ensure user profile exists
-    const existingProfile = await sql`
-      SELECT * FROM profiles WHERE id = ${userId}
-    `
-
-    if (existingProfile.length === 0) {
-      // Create profile for new user - starts on free tier with 0 credits
-      await sql`
-        INSERT INTO profiles (id, tier, parodies_used, parodies_limit)
-        VALUES (${userId}, 'free', 0, 0)
+      // Ensure user profile exists
+      const existingProfile = await sql`
+        SELECT * FROM profiles WHERE id = ${userId}
       `
-    }
 
-    // Check parody limits
-    const profile = (await sql`
-      SELECT * FROM profiles WHERE id = ${userId}
-    `)[0]
-
-    if (profile.parodies_limit !== -1 && profile.parodies_used >= profile.parodies_limit) {
-      return {
-        statusCode: 403,
-        headers,
-        body: JSON.stringify({ error: 'Parody limit reached. Please upgrade your plan.' }),
+      if (existingProfile.length === 0) {
+        // Create profile for new user - starts on free tier with 0 credits
+        await sql`
+          INSERT INTO profiles (id, tier, parodies_used, parodies_limit)
+          VALUES (${userId}, 'free', 0, 0)
+        `
       }
+
+      // Check parody limits
+      profile = (await sql`
+        SELECT * FROM profiles WHERE id = ${userId}
+      `)[0]
+
+      if (profile.parodies_limit !== -1 && profile.parodies_used >= profile.parodies_limit) {
+        return {
+          statusCode: 403,
+          headers,
+          body: JSON.stringify({ error: 'Parody limit reached. Please upgrade your plan.' }),
+        }
+      }
+    } else {
+      // Test mode: use pro tier settings (no backlink, unlimited)
+      profile = { tier: 'pro', parodies_limit: -1, parodies_used: 0 }
     }
 
     // Generate slug
