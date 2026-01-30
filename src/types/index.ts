@@ -48,6 +48,7 @@ export interface Profile {
   parodies_limit: number
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
+  creator_url: string | null
   created_at: string
 }
 
@@ -63,6 +64,7 @@ export interface Parody {
   status: 'analyzing' | 'generating' | 'complete' | 'failed'
   expires_at: string | null
   backlink_size: BacklinkSize
+  creator_url: string | null
   tone: ParodyTone
   theme: ParodyTheme
   error_message?: string

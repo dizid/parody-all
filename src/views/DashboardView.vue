@@ -11,6 +11,7 @@ interface Profile {
   parodies_used: number
   parodies_limit: number
   stripe_customer_id?: string
+  creator_url?: string | null
 }
 
 const router = useRouter()
@@ -26,6 +27,16 @@ const url = ref('')
 const isGenerating = ref(false)
 const isPurchasing = ref(false)
 const paymentMessage = ref('')
+
+// Creator URL settings
+const creatorUrl = ref('')
+const isSavingUrl = ref(false)
+const urlSaveMessage = ref('')
+
+// Check if user can set custom URL (creator or pro tier)
+const canSetCreatorUrl = computed(() => {
+  return profile.value && ['creator', 'pro'].includes(profile.value.tier)
+})
 
 // Computed: credits remaining
 const creditsRemaining = computed(() => {
@@ -91,17 +102,70 @@ async function fetchProfile() {
     const response = await fetch(`/.netlify/functions/get-profile?userId=${user.value.id}`)
     if (response.ok) {
       profile.value = await response.json()
+      creatorUrl.value = profile.value?.creator_url || ''
     }
   } catch (e) {
     console.error('Error fetching profile:', e)
   }
 }
 
-async function purchaseCredits() {
+async function saveCreatorUrl() {
+  if (!user.value || !canSetCreatorUrl.value) return
+
+  isSavingUrl.value = true
+  urlSaveMessage.value = ''
+
+  try {
+    const token = await getToken.value()
+    const response = await fetch('/.netlify/functions/update-profile', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        userId: user.value.id,
+        creatorUrl: creatorUrl.value || null,
+      }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to save')
+    }
+
+    // Update local profile
+    if (profile.value) {
+      profile.value.creator_url = creatorUrl.value || null
+    }
+    urlSaveMessage.value = 'URL saved! New parodies will use this link.'
+    setTimeout(() => urlSaveMessage.value = '', 3000)
+  } catch (e: any) {
+    urlSaveMessage.value = e.message || 'Failed to save URL. Please try again.'
+  } finally {
+    isSavingUrl.value = false
+  }
+}
+
+async function purchaseCredits(tier: 'single' | 'creator' | 'pro' = 'single') {
   if (!user.value) return
 
   isPurchasing.value = true
   paymentMessage.value = ''
+
+  // Map tier to correct Stripe price ID
+  const priceIds: Record<string, string> = {
+    single: import.meta.env.VITE_STRIPE_SINGLE_PRICE_ID || import.meta.env.VITE_STRIPE_PRICE_ID,
+    creator: import.meta.env.VITE_STRIPE_CREATOR_PRICE_ID,
+    pro: import.meta.env.VITE_STRIPE_PRO_PRICE_ID,
+  }
+  const priceId = priceIds[tier]
+
+  if (!priceId) {
+    paymentMessage.value = `Price not configured for ${tier} tier. Please contact support.`
+    isPurchasing.value = false
+    return
+  }
 
   try {
     const token = await getToken.value()
@@ -115,8 +179,8 @@ async function purchaseCredits() {
       body: JSON.stringify({
         userId: user.value.id,
         userEmail: user.value.primaryEmailAddress?.emailAddress,
-        priceId: import.meta.env.VITE_STRIPE_PRICE_ID,
-        quantity: 1,
+        priceId,
+        tier,
       }),
     })
 
@@ -229,13 +293,48 @@ function getStatusBadge(status: string) {
           </div>
         </div>
         <button
-          @click="purchaseCredits"
+          @click="purchaseCredits('single')"
           :disabled="isPurchasing"
           class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50"
         >
           {{ isPurchasing ? 'Loading...' : (profile?.tier === 'none' || creditsRemaining === 0 ? 'Get Credits' : 'Buy More') }}
         </button>
       </div>
+    </div>
+
+    <!-- Creator URL Settings (for Creator/Pro tiers) -->
+    <div v-if="canSetCreatorUrl" class="rounded-2xl shadow-lg p-6 mb-8" style="background-color: var(--color-bg-card);">
+      <h2 class="text-xl font-semibold mb-2" style="color: var(--color-text-primary);">
+        Custom Backlink URL
+      </h2>
+      <p class="text-sm mb-4" style="color: var(--color-text-secondary);">
+        Your parodies will link back to this URL in the header and footer
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <input
+          v-model="creatorUrl"
+          type="url"
+          placeholder="https://yoursite.com"
+          class="flex-1 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+          style="background-color: var(--color-bg-secondary); border: 1px solid var(--color-border); color: var(--color-text-primary);"
+        />
+        <button
+          @click="saveCreatorUrl"
+          :disabled="isSavingUrl"
+          class="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-semibold disabled:opacity-50 transition-colors"
+        >
+          {{ isSavingUrl ? 'Saving...' : 'Save URL' }}
+        </button>
+      </div>
+
+      <p v-if="urlSaveMessage" class="text-sm mt-2" :class="urlSaveMessage.includes('saved') ? 'text-green-600' : 'text-red-500'">
+        {{ urlSaveMessage }}
+      </p>
+
+      <p class="text-xs mt-3" style="color: var(--color-text-secondary);">
+        Leave empty to use default ParodyHumor.lol backlinks
+      </p>
     </div>
 
     <!-- No Credits Paywall -->
@@ -251,7 +350,7 @@ function getStatusBadge(status: string) {
           <p class="text-2xl font-black text-purple-600">${{ PRICING_TIERS.single.price }}</p>
           <p class="text-sm mb-3" style="color: var(--color-text-secondary);">one-time</p>
           <button
-            @click="purchaseCredits"
+            @click="purchaseCredits('single')"
             class="w-full bg-purple-100 text-purple-700 py-2 rounded-lg font-medium hover:bg-purple-200 transition-colors"
           >
             Buy Now
@@ -265,7 +364,7 @@ function getStatusBadge(status: string) {
           <p class="text-2xl font-black text-purple-600">${{ PRICING_TIERS.creator.price }}<span class="text-sm font-normal">/mo</span></p>
           <p class="text-sm mb-3" style="color: var(--color-text-secondary);">10 parodies/month</p>
           <button
-            @click="purchaseCredits"
+            @click="purchaseCredits('creator')"
             class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 py-2 rounded-lg font-bold hover:shadow-lg transition-all"
           >
             Subscribe
@@ -278,7 +377,7 @@ function getStatusBadge(status: string) {
           <p class="text-2xl font-black text-purple-600">${{ PRICING_TIERS.pro.price }}<span class="text-sm font-normal">/mo</span></p>
           <p class="text-sm mb-3" style="color: var(--color-text-secondary);">Unlimited parodies</p>
           <button
-            @click="purchaseCredits"
+            @click="purchaseCredits('pro')"
             class="w-full bg-purple-100 text-purple-700 py-2 rounded-lg font-medium hover:bg-purple-200 transition-colors"
           >
             Subscribe

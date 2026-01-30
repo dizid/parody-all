@@ -40,7 +40,7 @@ const handler: Handler = async (event) => {
       }
     }
 
-    const { userId, userEmail, priceId, quantity = 1 } = JSON.parse(event.body || '{}')
+    const { userId, userEmail, priceId, tier } = JSON.parse(event.body || '{}')
 
     if (!userId || !priceId) {
       return {
@@ -76,22 +76,35 @@ const handler: Handler = async (event) => {
     // Get origin for redirect URLs
     const origin = event.headers.origin || event.headers.referer || 'http://localhost:8888'
 
+    // Determine checkout mode based on tier (subscriptions for creator/pro)
+    const isSubscription = tier === 'creator' || tier === 'pro'
+
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [
         {
           price: priceId,
-          quantity,
+          quantity: 1,
         },
       ],
-      mode: 'payment',
+      mode: isSubscription ? 'subscription' : 'payment',
       success_url: `${origin}/dashboard?payment=success`,
       cancel_url: `${origin}/dashboard?payment=cancelled`,
       metadata: {
         user_id: userId,
-        credits: String(quantity),
+        price_id: priceId,
+        tier: tier || 'single',
       },
+      // For subscriptions, also add metadata to the subscription
+      ...(isSubscription && {
+        subscription_data: {
+          metadata: {
+            user_id: userId,
+            tier,
+          },
+        },
+      }),
     })
 
     return {

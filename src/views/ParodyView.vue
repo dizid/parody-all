@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
 import type { Parody, ParodyData, ParodyConfig, Product, ParodyTheme, ParodyTone } from '../types'
 import { useParodyInteractions } from '../composables/useParodyInteractions'
 import ParodyBacklink from '../components/ParodyBacklink.vue'
@@ -13,12 +14,22 @@ import FeeCalculator from '../components/parody/FeeCalculator.vue'
 import ParodyFooter from '../components/parody/ParodyFooter.vue'
 
 const route = useRoute()
+const router = useRouter()
+const { user } = useUser()
+const { getToken } = useClerkAuth()
 
 const parody = ref<Parody | null>(null)
 const loading = ref(true)
 const error = ref('')
 const isExpired = ref(false)
 const showShareModal = ref(false)
+const isRegenerating = ref(false)
+const regenerateError = ref('')
+
+// Check if current user owns this parody
+const isOwner = computed(() => {
+  return user.value && parody.value && parody.value.user_id === user.value.id
+})
 
 // Interactions
 const {
@@ -225,6 +236,45 @@ async function shareParody() {
   // Fallback: show share modal
   showShareModal.value = true
 }
+
+async function regenerateParody() {
+  if (!parody.value || !user.value || !isOwner.value) return
+
+  if (!confirm('This will regenerate your parody with new content. It costs 1 credit. Continue?')) {
+    return
+  }
+
+  isRegenerating.value = true
+  regenerateError.value = ''
+
+  try {
+    const token = await getToken.value()
+
+    const response = await fetch('/.netlify/functions/regenerate-parody', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        parodyId: parody.value.id,
+        userId: user.value.id,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to start regeneration')
+    }
+
+    // Redirect to generate page to watch progress
+    router.push(`/generate?id=${parody.value.id}`)
+  } catch (e: any) {
+    regenerateError.value = e.message
+  } finally {
+    isRegenerating.value = false
+  }
+}
 </script>
 
 <template>
@@ -330,12 +380,27 @@ async function shareParody() {
       <!-- Parody Notice Banner -->
       <div class="bg-pink-500 text-white text-center py-2 text-sm flex items-center justify-center gap-4 flex-wrap">
         <span>🎭 This is a parody of <a :href="parody.original_url" target="_blank" rel="noopener" class="underline hover:text-white/80">{{ parody.original_url }}</a> - For entertainment only!</span>
-        <button
-          @click="shareParody"
-          class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs font-medium transition-colors"
-        >
-          📤 Share
-        </button>
+        <div class="flex gap-2">
+          <button
+            v-if="isOwner"
+            @click="regenerateParody"
+            :disabled="isRegenerating"
+            class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs font-medium transition-colors disabled:opacity-50"
+          >
+            {{ isRegenerating ? '🔄 Regenerating...' : '🔄 Regenerate' }}
+          </button>
+          <button
+            @click="shareParody"
+            class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs font-medium transition-colors"
+          >
+            📤 Share
+          </button>
+        </div>
+      </div>
+
+      <!-- Regenerate Error -->
+      <div v-if="regenerateError" class="bg-red-500 text-white text-center py-2 text-sm">
+        {{ regenerateError }}
       </div>
 
       <!-- Main Header -->
@@ -347,6 +412,8 @@ async function shareParody() {
         :announcements="parodyData?.announcements"
         :cart-item-count="cartItemCount"
         :logo-click-count="logoClickCount"
+        :creator-url="parody.creator_url"
+        :backlink-size="parody.backlink_size"
         @logo-click="handleLogoClickEvent"
         @cart-click="handleCartClick"
         @search-click="handleSearchClick"
@@ -853,6 +920,8 @@ async function shareParody() {
         :original-url="parody.original_url"
         :trust-badges="parodyData?.trustBadges"
         :faqs="parodyData?.faqs"
+        :creator-url="parody.creator_url"
+        :backlink-size="parody.backlink_size"
       />
     </div>
 

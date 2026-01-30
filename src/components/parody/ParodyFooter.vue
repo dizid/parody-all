@@ -1,13 +1,29 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { TrustBadge, FAQ } from '../../types'
 
-defineProps<{
+const props = defineProps<{
   parodyName: string
   originalUrl: string
   trustBadges?: TrustBadge[]
   faqs?: FAQ[]
+  creatorUrl?: string | null
+  backlinkSize?: string
 }>()
+
+// Extract domain from creator URL for display
+const creatorDomain = computed(() => {
+  if (!props.creatorUrl) return ''
+  try {
+    return new URL(props.creatorUrl).hostname.replace('www.', '')
+  } catch {
+    return props.creatorUrl
+  }
+})
+
+// Determine the backlink URL and text
+const backlinkUrl = computed(() => props.creatorUrl || 'https://parodyhumor.lol')
+const backlinkText = computed(() => props.creatorUrl ? `Made by ${creatorDomain.value}` : 'Made with ParodyHumor.lol')
 
 const copyrightClicks = ref(0)
 const showSecret = ref(false)
@@ -184,15 +200,16 @@ function toggleFaq(id: string) {
           </Transition>
         </div>
 
-        <!-- Made with ParodyHumor.lol -->
+        <!-- Made with ParodyHumor.lol or Creator URL -->
         <div class="text-center pt-6 border-t border-gray-800">
           <a
-            href="https://parodyhumor.lol"
+            :href="backlinkUrl"
             target="_blank"
+            rel="noopener"
             class="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
           >
             <span>🎭</span>
-            <span>Made with ParodyHumor.lol</span>
+            <span>{{ backlinkText }}</span>
             <span>→</span>
           </a>
         </div>

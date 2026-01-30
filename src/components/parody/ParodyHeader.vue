@@ -10,7 +10,19 @@ const props = defineProps<{
   announcements?: Announcement[]
   cartItemCount: number
   logoClickCount: number
+  creatorUrl?: string | null
+  backlinkSize?: string
 }>()
+
+// Extract domain from creator URL for display
+const creatorDomain = computed(() => {
+  if (!props.creatorUrl) return ''
+  try {
+    return new URL(props.creatorUrl).hostname.replace('www.', '')
+  } catch {
+    return props.creatorUrl
+  }
+})
 
 const emit = defineEmits<{
   logoClick: []
@@ -63,6 +75,21 @@ function handleBlur() {
 
 <template>
   <header class="relative">
+    <!-- Creator Backlink Banner (for paid users with custom URL) -->
+    <div
+      v-if="creatorUrl && backlinkSize !== 'none'"
+      :class="[
+        'text-center text-white transition-colors',
+        backlinkSize === 'small' ? 'py-1 text-xs bg-gray-800 hover:bg-gray-700' : 'py-2 text-sm bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400'
+      ]"
+    >
+      <a :href="creatorUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-1 hover:underline">
+        <span v-if="backlinkSize !== 'small'">Made by</span>
+        <strong>{{ creatorDomain }}</strong>
+        <span>→</span>
+      </a>
+    </div>
+
     <!-- Announcement Banner -->
     <Transition name="slide" mode="out-in">
       <div

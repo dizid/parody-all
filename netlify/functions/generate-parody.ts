@@ -123,11 +123,13 @@ const handler: Handler = async (event) => {
     const slug = `${slugBase}-${Date.now().toString(36)}`
 
     // Create parody record with 'analyzing' status
-    // Backlink size based on tier: pro/unlimited = none, starter = small, free = large
-    const backlinkSize = profile.tier === 'pro' || profile.tier === 'unlimited' ? 'none' : profile.tier === 'starter' ? 'small' : 'large'
+    // Backlink size based on tier: pro = none, creator = small, free/single = large
+    const backlinkSize = profile.tier === 'pro' ? 'none' : profile.tier === 'creator' ? 'small' : 'large'
+    // Get creator URL from profile (only for paid users)
+    const creatorUrl = ['creator', 'pro'].includes(profile.tier) ? (profile.creator_url || null) : null
     const parody = (await sql`
-      INSERT INTO parodies (user_id, slug, original_url, status, backlink_size, tone, theme)
-      VALUES (${userId}, ${slug}, ${url}, 'analyzing', ${backlinkSize}, ${tone}, ${theme})
+      INSERT INTO parodies (user_id, slug, original_url, status, backlink_size, creator_url, tone, theme)
+      VALUES (${userId}, ${slug}, ${url}, 'analyzing', ${backlinkSize}, ${creatorUrl}, ${tone}, ${theme})
       RETURNING *
     `)[0]
 
