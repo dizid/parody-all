@@ -92,9 +92,11 @@ async function analyzeUrl() {
       siteType = 'food'
     }
 
+    // Normalize URL to include protocol
+    const normalizedUrl = url.value.startsWith('http') ? url.value : `https://${url.value}`
     analysisResult.value = {
-      url: url.value,
-      siteName: new URL(url.value.startsWith('http') ? url.value : `https://${url.value}`).hostname.replace('www.', ''),
+      url: normalizedUrl,
+      siteName: new URL(normalizedUrl).hostname.replace('www.', ''),
       siteType,
       primaryColor: '#7c3aed',
       secondaryColor: '#f59e0b',

@@ -21,6 +21,34 @@ const handler: Handler = async (event) => {
     `
     results.push('Added notification_email column')
 
+    // Add tone column for parody tone customization
+    await sql`
+      ALTER TABLE parodies
+      ADD COLUMN IF NOT EXISTS tone TEXT DEFAULT 'negative'
+    `
+    results.push('Added tone column')
+
+    // Add theme column for parody theme customization
+    await sql`
+      ALTER TABLE parodies
+      ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'default'
+    `
+    results.push('Added theme column')
+
+    // Add creator_url column for backlink customization
+    await sql`
+      ALTER TABLE parodies
+      ADD COLUMN IF NOT EXISTS creator_url TEXT
+    `
+    results.push('Added creator_url column')
+
+    // Add creator_url column to profiles for paid users
+    await sql`
+      ALTER TABLE profiles
+      ADD COLUMN IF NOT EXISTS creator_url TEXT
+    `
+    results.push('Added creator_url column to profiles')
+
     // Add indexes for performance (idempotent - uses IF NOT EXISTS)
     await sql`
       CREATE INDEX IF NOT EXISTS idx_parodies_slug ON parodies(slug)

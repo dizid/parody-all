@@ -8,11 +8,12 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS profiles (
   id TEXT PRIMARY KEY,  -- Clerk user ID
   email TEXT,
-  tier TEXT DEFAULT 'free' CHECK (tier IN ('free', 'starter', 'pro', 'unlimited')),
+  tier TEXT DEFAULT 'free' CHECK (tier IN ('free', 'single', 'creator', 'pro')),
   parodies_used INT DEFAULT 0,
-  parodies_limit INT DEFAULT 1,
+  parodies_limit INT DEFAULT 0,
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
+  creator_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -22,13 +23,17 @@ CREATE TABLE IF NOT EXISTS parodies (
   user_id TEXT REFERENCES profiles(id),
   slug TEXT UNIQUE NOT NULL,
   original_url TEXT NOT NULL,
-  site_type TEXT CHECK (site_type IN ('ecommerce', 'travel', 'social', 'booking', 'news', 'other')),
+  site_type TEXT CHECK (site_type IN ('ecommerce', 'travel', 'social', 'booking', 'news', 'corporate', 'food', 'other')),
   parody_name TEXT,
   parody_data JSONB,
   parody_config JSONB,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'analyzing', 'generating', 'complete', 'failed')),
   expires_at TIMESTAMP WITH TIME ZONE,
-  backlink_size TEXT DEFAULT 'large' CHECK (backlink_size IN ('large', 'medium', 'small', 'minimal')),
+  backlink_size TEXT DEFAULT 'large' CHECK (backlink_size IN ('large', 'small', 'none')),
+  creator_url TEXT,
+  tone TEXT DEFAULT 'negative' CHECK (tone IN ('positive', 'negative', 'balanced', 'erotic')),
+  theme TEXT DEFAULT 'default' CHECK (theme IN ('default', 'christmas', 'easter', 'sport', 'sensual', 'retro')),
+  notification_email TEXT,
   error_message TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
