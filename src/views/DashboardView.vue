@@ -214,7 +214,7 @@ async function startGeneration() {
   try {
     const token = await getToken.value()
 
-    const response = await fetch('/.netlify/functions/generate-parody-background', {
+    const response = await fetch('/.netlify/functions/generate-parody', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
