@@ -53,7 +53,7 @@ const handler: Handler = async (event) => {
       }
 
       const result = await sql`
-        SELECT * FROM parodies WHERE id = ${id} AND user_id = ${authResult.userId} LIMIT 1
+        SELECT * FROM parodies WHERE id = ${id} AND (user_id = ${authResult.userId} OR user_id IS NULL) LIMIT 1
       `
       parody = result[0]
     }
