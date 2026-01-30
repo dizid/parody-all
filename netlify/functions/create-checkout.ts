@@ -2,15 +2,12 @@ import type { Handler } from '@netlify/functions'
 import { neon } from '@neondatabase/serverless'
 import Stripe from 'stripe'
 import { isMaintenanceMode, maintenanceResponse } from './lib/killswitch'
+import { verifyAuth, getHeaders, unauthorizedResponse } from './lib/auth'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 const handler: Handler = async (event) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  }
+  const headers = getHeaders(event.headers.origin)
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
@@ -30,23 +27,20 @@ const handler: Handler = async (event) => {
   }
 
   try {
-    const authHeader = event.headers.authorization
-
-    if (!authHeader?.startsWith('Bearer ')) {
-      return {
-        statusCode: 401,
-        headers,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      }
+    // Verify JWT and extract userId from token
+    const authResult = await verifyAuth(event.headers.authorization)
+    if (!authResult.authenticated) {
+      return unauthorizedResponse(headers, authResult.error)
     }
+    const userId = authResult.userId
 
-    const { userId, userEmail, priceId, tier } = JSON.parse(event.body || '{}')
+    const { userEmail, priceId, tier } = JSON.parse(event.body || '{}')
 
-    if (!userId || !priceId) {
+    if (!priceId) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing userId or priceId' }),
+        body: JSON.stringify({ error: 'Missing priceId' }),
       }
     }
 
@@ -112,12 +106,13 @@ const handler: Handler = async (event) => {
       headers,
       body: JSON.stringify({ url: session.url }),
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    // Log full error server-side but return generic message to client
     console.error('Error creating checkout:', error)
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: error.message || 'Internal server error' }),
+      body: JSON.stringify({ error: 'Internal server error' }),
     }
   }
 }

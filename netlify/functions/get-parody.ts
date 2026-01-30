@@ -2,13 +2,10 @@ import type { Handler } from '@netlify/functions'
 import { neon } from '@neondatabase/serverless'
 import { isMaintenanceMode, maintenanceResponse } from './lib/killswitch'
 import { getCachedParody, cacheParody } from './lib/cache'
+import { verifyAuth, getHeaders, unauthorizedResponse } from './lib/auth'
 
 const handler: Handler = async (event) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  }
+  const headers = getHeaders(event.headers.origin)
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
@@ -33,7 +30,8 @@ const handler: Handler = async (event) => {
 
     let parody
     if (slug) {
-      // Try cache first for slug-based lookups (completed parodies)
+      // Slug-based lookups are public (parody pages are shareable)
+      // Try cache first for completed parodies
       const cached = await getCachedParody(slug)
       if (cached) {
         return {
@@ -48,9 +46,14 @@ const handler: Handler = async (event) => {
       `
       parody = result[0]
     } else {
-      // ID-based lookups are for polling during generation - don't cache
+      // ID-based lookups require auth and ownership verification
+      const authResult = await verifyAuth(event.headers.authorization)
+      if (!authResult.authenticated) {
+        return unauthorizedResponse(headers, authResult.error)
+      }
+
       const result = await sql`
-        SELECT * FROM parodies WHERE id = ${id} LIMIT 1
+        SELECT * FROM parodies WHERE id = ${id} AND user_id = ${authResult.userId} LIMIT 1
       `
       parody = result[0]
     }

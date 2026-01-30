@@ -9,13 +9,14 @@ import {
 } from './lib/killswitch'
 import { checkUserRateLimit } from './lib/rate-limit'
 import { getActiveGenerations, incrementActiveGenerations } from './lib/cache'
+import { verifyAuth, getHeaders, unauthorizedResponse } from './lib/auth'
+
+// Valid tones and themes for input validation
+const VALID_TONES = ['positive', 'negative', 'balanced', 'erotic'] as const
+const VALID_THEMES = ['default', 'christmas', 'easter', 'sport', 'sensual', 'retro'] as const
 
 const handler: Handler = async (event) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  }
+  const headers = getHeaders(event.headers.origin)
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
@@ -44,24 +45,49 @@ const handler: Handler = async (event) => {
 
   try {
     const sql = neon(process.env.DATABASE_URL!)
-    const authHeader = event.headers.authorization
 
-    if (!authHeader?.startsWith('Bearer ')) {
-      return {
-        statusCode: 401,
-        headers,
-        body: JSON.stringify({ error: 'Unauthorized' }),
-      }
+    // Verify JWT and extract userId from token (don't trust client-provided userId)
+    const authResult = await verifyAuth(event.headers.authorization)
+    if (!authResult.authenticated) {
+      return unauthorizedResponse(headers, authResult.error)
     }
+    const userId = authResult.userId
 
     // Parse request body
-    const { url, userId, testKey, tone = 'negative', theme = 'default' } = JSON.parse(event.body || '{}')
+    const { url, tone = 'negative', theme = 'default' } = JSON.parse(event.body || '{}')
 
-    if (!url || !userId) {
+    if (!url) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing url or userId' }),
+        body: JSON.stringify({ error: 'Missing url' }),
+      }
+    }
+
+    // Validate URL format
+    try {
+      new URL(url)
+    } catch {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid URL format' }),
+      }
+    }
+
+    // Validate tone and theme
+    if (!VALID_TONES.includes(tone)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: `Invalid tone. Must be one of: ${VALID_TONES.join(', ')}` }),
+      }
+    }
+    if (!VALID_THEMES.includes(theme)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: `Invalid theme. Must be one of: ${VALID_THEMES.join(', ')}` }),
       }
     }
 
@@ -103,10 +129,7 @@ const handler: Handler = async (event) => {
       SELECT * FROM profiles WHERE id = ${userId}
     `)[0]
 
-    // Check for test bypass
-    const isTestBypass = testKey && process.env.TEST_BYPASS_KEY && testKey === process.env.TEST_BYPASS_KEY
-
-    if (!isTestBypass && profile.parodies_limit !== -1 && profile.parodies_used >= profile.parodies_limit) {
+    if (profile.parodies_limit !== -1 && profile.parodies_used >= profile.parodies_limit) {
       return {
         statusCode: 403,
         headers,

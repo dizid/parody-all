@@ -1,12 +1,9 @@
 import type { Handler } from '@netlify/functions'
 import { neon } from '@neondatabase/serverless'
+import { verifyAuth, getHeaders, unauthorizedResponse } from './lib/auth'
 
 const handler: Handler = async (event) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  }
+  const headers = getHeaders(event.headers.origin)
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
@@ -18,11 +15,15 @@ const handler: Handler = async (event) => {
 
   try {
     const sql = neon(process.env.DATABASE_URL!)
-    const { userId, creatorUrl } = JSON.parse(event.body || '{}')
 
-    if (!userId) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing userId' }) }
+    // Verify JWT and extract userId from token
+    const authResult = await verifyAuth(event.headers.authorization)
+    if (!authResult.authenticated) {
+      return unauthorizedResponse(headers, authResult.error)
     }
+    const userId = authResult.userId
+
+    const { creatorUrl } = JSON.parse(event.body || '{}')
 
     // Validate URL format if provided
     if (creatorUrl) {

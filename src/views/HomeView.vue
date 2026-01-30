@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
 import {
@@ -14,13 +14,9 @@ import {
 } from '../types'
 
 const router = useRouter()
-const route = useRoute()
 const { isSignedIn } = useAuth()
 const { user } = useUser()
 const { getToken } = useClerkAuth()
-
-// Test bypass via URL param ?test=test123
-const testKey = computed(() => route.query.test as string | undefined)
 
 const url = ref('')
 const isAnalyzing = ref(false)
@@ -130,10 +126,8 @@ async function generateParody() {
       },
       body: JSON.stringify({
         url: analysisResult.value.url,
-        userId: user.value.id,
         tone: selectedTone.value,
         theme: selectedTheme.value,
-        ...(testKey.value && { testKey: testKey.value }),
       }),
     })
 

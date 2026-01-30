@@ -47,9 +47,6 @@ const creditsRemaining = computed(() => {
 
 const canGenerate = computed(() => creditsRemaining.value > 0)
 
-// Test bypass via URL param ?test=test123
-const testKey = computed(() => route.query.test as string | undefined)
-
 // Check for payment result on mount
 onMounted(() => {
   const payment = route.query.payment
@@ -84,7 +81,12 @@ async function fetchParodies() {
   }
 
   try {
-    const response = await fetch(`/.netlify/functions/list-parodies?userId=${user.value.id}`)
+    const token = await getToken.value()
+    const response = await fetch('/.netlify/functions/list-parodies', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
     if (response.ok) {
       parodies.value = await response.json()
     }
@@ -99,7 +101,12 @@ async function fetchProfile() {
   if (!user.value) return
 
   try {
-    const response = await fetch(`/.netlify/functions/get-profile?userId=${user.value.id}`)
+    const token = await getToken.value()
+    const response = await fetch('/.netlify/functions/get-profile', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
     if (response.ok) {
       profile.value = await response.json()
       creatorUrl.value = profile.value?.creator_url || ''
@@ -124,7 +131,6 @@ async function saveCreatorUrl() {
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
-        userId: user.value.id,
         creatorUrl: creatorUrl.value || null,
       }),
     })
@@ -177,7 +183,6 @@ async function purchaseCredits(tier: 'single' | 'creator' | 'pro' = 'single') {
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
-        userId: user.value.id,
         userEmail: user.value.primaryEmailAddress?.emailAddress,
         priceId,
         tier,
@@ -202,8 +207,7 @@ async function purchaseCredits(tier: 'single' | 'creator' | 'pro' = 'single') {
 async function startGeneration() {
   if (!url.value || !user.value) return
 
-  // Allow bypass with test key
-  if (!canGenerate.value && !testKey.value) {
+  if (!canGenerate.value) {
     paymentMessage.value = 'You have no credits remaining. Please purchase more to continue.'
     return
   }
@@ -222,8 +226,6 @@ async function startGeneration() {
       },
       body: JSON.stringify({
         url: url.value,
-        userId: user.value.id,
-        ...(testKey.value && { testKey: testKey.value }),
       }),
     })
 
@@ -338,7 +340,7 @@ function getStatusBadge(status: string) {
     </div>
 
     <!-- No Credits Paywall -->
-    <div v-if="profile && creditsRemaining === 0 && !testKey" class="rounded-2xl shadow-lg p-8 mb-8 text-center" style="background-color: var(--color-bg-card); border: 2px solid var(--color-border);">
+    <div v-if="profile && creditsRemaining === 0" class="rounded-2xl shadow-lg p-8 mb-8 text-center" style="background-color: var(--color-bg-card); border: 2px solid var(--color-border);">
       <div class="text-5xl mb-4">💳</div>
       <h2 class="text-2xl font-bold mb-2" style="color: var(--color-text-primary);">Get Credits to Generate Parodies</h2>
       <p class="mb-6" style="color: var(--color-text-secondary);">Choose a plan that works for you</p>
@@ -399,10 +401,10 @@ function getStatusBadge(status: string) {
         />
         <button
           type="submit"
-          :disabled="isGenerating || !url || (!canGenerate && !testKey)"
+          :disabled="isGenerating || !url || !canGenerate"
           class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/30 disabled:opacity-50 transition-all whitespace-nowrap"
         >
-          {{ isGenerating ? 'Starting...' : (canGenerate || testKey) ? 'Generate Parody' : 'No Credits' }}
+          {{ isGenerating ? 'Starting...' : canGenerate ? 'Generate Parody' : 'No Credits' }}
         </button>
       </form>
     </div>

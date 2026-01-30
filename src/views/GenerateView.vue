@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuth as useClerkAuth } from '@clerk/vue'
 import type { Parody } from '../types'
 
 const route = useRoute()
 const router = useRouter()
+const { getToken } = useClerkAuth()
 
 const parody = ref<Parody | null>(null)
 const loading = ref(true)
@@ -67,7 +69,12 @@ async function fetchParody() {
   }
 
   try {
-    const response = await fetch(`/.netlify/functions/get-parody?id=${id}`)
+    const token = await getToken.value()
+    const response = await fetch(`/.netlify/functions/get-parody?id=${id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
     if (!response.ok) throw new Error('Failed to fetch parody')
 
     const data = await response.json()

@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@clerk/backend": "^2.29.7",
     "@clerk/vue": "^1.17.7",
     "@mendable/firecrawl-js": "^4.10.0",
     "@neondatabase/serverless": "^1.0.2",

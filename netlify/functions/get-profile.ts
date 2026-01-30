@@ -1,12 +1,9 @@
 import type { Handler } from '@netlify/functions'
 import { neon } from '@neondatabase/serverless'
+import { verifyAuth, getHeaders, unauthorizedResponse } from './lib/auth'
 
 const handler: Handler = async (event) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  }
+  const headers = getHeaders(event.headers.origin)
 
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 200, headers, body: '' }
@@ -14,15 +11,13 @@ const handler: Handler = async (event) => {
 
   try {
     const sql = neon(process.env.DATABASE_URL!)
-    const { userId } = event.queryStringParameters || {}
 
-    if (!userId) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Missing userId parameter' }),
-      }
+    // Verify JWT and extract userId from token
+    const authResult = await verifyAuth(event.headers.authorization)
+    if (!authResult.authenticated) {
+      return unauthorizedResponse(headers, authResult.error)
     }
+    const userId = authResult.userId
 
     // Get or create profile
     let profile = (await sql`
@@ -30,10 +25,10 @@ const handler: Handler = async (event) => {
     `)[0]
 
     if (!profile) {
-      // Create profile for new user - no free credits, must pay
+      // Create profile for new user - starts on free tier with 0 credits
       profile = (await sql`
         INSERT INTO profiles (id, tier, parodies_used, parodies_limit)
-        VALUES (${userId}, 'none', 0, 0)
+        VALUES (${userId}, 'free', 0, 0)
         RETURNING *
       `)[0]
     }
