@@ -56,11 +56,11 @@ const handler: Handler = async (event) => {
 
     console.log('Auth check:', { testKey: !!testKey, hasTestKey, testKeyMatches, isTestMode })
 
-    let userId: string
+    let userId: string | null
 
     if (isTestMode) {
-      // Use a test user ID for test mode
-      userId = 'test-user-' + Date.now()
+      // Use NULL for test mode (user_id is nullable, avoids foreign key violation)
+      userId = null
       console.log('Test mode enabled, bypassing auth')
     } else {
       // Verify JWT and extract userId from token (don't trust client-provided userId)
