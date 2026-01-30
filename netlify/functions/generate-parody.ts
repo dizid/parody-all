@@ -192,13 +192,52 @@ const handler: Handler = async (event) => {
     // Invoke background function to do the actual generation
     // This runs asynchronously and has a 15-minute timeout
     const siteUrl = process.env.URL || 'http://localhost:8888'
-    fetch(`${siteUrl}/.netlify/functions/generate-parody-background`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ parodyId: parody.id, url, tone, theme }),
-    }).catch(err => {
-      console.error('Failed to invoke background function:', err)
-    })
+    const backgroundUrl = `${siteUrl}/.netlify/functions/generate-parody-background`
+    console.log(`Invoking background function at: ${backgroundUrl}`)
+
+    // Use a timeout to ensure we don't wait forever for the background function to acknowledge
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout for initial response
+
+    try {
+      const bgResponse = await fetch(backgroundUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parodyId: parody.id, url, tone, theme }),
+        signal: controller.signal,
+      })
+      clearTimeout(timeoutId)
+
+      // Log response status for debugging
+      console.log(`Background function response status: ${bgResponse.status}`)
+
+      // If background function rejected the request, mark as failed immediately
+      if (!bgResponse.ok && bgResponse.status !== 200) {
+        const errorText = await bgResponse.text().catch(() => 'Unknown error')
+        console.error(`Background function error: ${bgResponse.status} - ${errorText}`)
+
+        await sql`
+          UPDATE parodies
+          SET status = 'failed', error_message = 'Generation service temporarily unavailable. Please try again.'
+          WHERE id = ${parody.id}
+        `
+      }
+    } catch (err: any) {
+      clearTimeout(timeoutId)
+      // Log but don't fail - the background function may still be processing
+      // This happens when the function takes longer than 10s to respond
+      if (err.name === 'AbortError') {
+        console.log('Background function invocation timed out waiting for response (this is normal for long-running generations)')
+      } else {
+        console.error('Failed to invoke background function:', err)
+        // Mark as failed if we couldn't even reach the background function
+        await sql`
+          UPDATE parodies
+          SET status = 'failed', error_message = 'Failed to start generation. Please try again.'
+          WHERE id = ${parody.id}
+        `
+      }
+    }
 
     // Return immediately with parody ID (frontend needs this to poll for status)
     return {

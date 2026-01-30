@@ -86,13 +86,15 @@ async function fetchParody() {
     } else if (data.status === 'failed') {
       if (pollTimeout) clearTimeout(pollTimeout)
       error.value = data.error_message || 'Generation failed. Please try again.'
-    } else if (data.status === 'generating') {
-      // Check if generation is stuck
+    } else if (data.status === 'generating' || data.status === 'analyzing') {
+      // Check if generation is stuck (works for both analyzing and generating phases)
       const createdAt = new Date(data.created_at).getTime()
       const now = Date.now()
       if (now - createdAt > STUCK_THRESHOLD_MS) {
         if (pollTimeout) clearTimeout(pollTimeout)
-        error.value = 'Generation appears to be stuck. Please try creating a new parody.'
+        error.value = data.status === 'analyzing'
+          ? 'Analysis is taking too long. The website may be difficult to scrape. Please try a different URL.'
+          : 'Generation appears to be stuck. Please try creating a new parody.'
       }
     }
   } catch (e) {
