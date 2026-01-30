@@ -50,7 +50,12 @@ const handler: Handler = async (event) => {
     const { url, tone = 'negative', theme = 'default', testKey } = JSON.parse(event.body || '{}')
 
     // Test mode bypass - only works with valid TEST_BYPASS_KEY env var
-    const isTestMode = testKey && process.env.TEST_BYPASS_KEY && testKey === process.env.TEST_BYPASS_KEY
+    const hasTestKey = !!process.env.TEST_BYPASS_KEY
+    const testKeyMatches = testKey === process.env.TEST_BYPASS_KEY
+    const isTestMode = testKey && hasTestKey && testKeyMatches
+
+    console.log('Auth check:', { testKey: !!testKey, hasTestKey, testKeyMatches, isTestMode })
+
     let userId: string
 
     if (isTestMode) {
@@ -102,7 +107,7 @@ const handler: Handler = async (event) => {
     }
 
     // Skip rate limit and credit checks in test mode
-    let profile: { tier: string; parodies_limit: number; parodies_used: number } | null = null
+    let profile: { tier: string; parodies_limit: number; parodies_used: number; creator_url?: string | null } | null = null
 
     if (!isTestMode) {
       // Check rate limit (5 generations per hour per user)
@@ -152,7 +157,7 @@ const handler: Handler = async (event) => {
       }
     } else {
       // Test mode: use pro tier settings (no backlink, unlimited)
-      profile = { tier: 'pro', parodies_limit: -1, parodies_used: 0 }
+      profile = { tier: 'pro', parodies_limit: -1, parodies_used: 0, creator_url: null }
     }
 
     // Generate slug
@@ -174,10 +179,12 @@ const handler: Handler = async (event) => {
       RETURNING *
     `)[0]
 
-    // Increment parody count
-    await sql`
-      UPDATE profiles SET parodies_used = parodies_used + 1 WHERE id = ${userId}
-    `
+    // Increment parody count (skip in test mode - test user has no profile)
+    if (!isTestMode) {
+      await sql`
+        UPDATE profiles SET parodies_used = parodies_used + 1 WHERE id = ${userId}
+      `
+    }
 
     // Track active generation for capacity control
     await incrementActiveGenerations()

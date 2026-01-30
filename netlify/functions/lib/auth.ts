@@ -1,9 +1,4 @@
-import { createClerkClient } from '@clerk/backend'
-
-// Initialize Clerk backend client
-const clerk = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY,
-})
+import { verifyToken } from '@clerk/backend'
 
 export type AuthResult = {
   authenticated: false
@@ -28,15 +23,21 @@ export async function verifyAuth(authHeader: string | undefined): Promise<AuthRe
     return { authenticated: false, error: 'Empty token' }
   }
 
+  const secretKey = process.env.CLERK_SECRET_KEY
+  if (!secretKey) {
+    console.error('CLERK_SECRET_KEY not configured')
+    return { authenticated: false, error: 'Authentication not configured' }
+  }
+
   try {
     // Verify the JWT using Clerk's backend SDK
-    const { sub } = await clerk.verifyToken(token)
+    const verified = await verifyToken(token, { secretKey })
 
-    if (!sub) {
+    if (!verified.sub) {
       return { authenticated: false, error: 'Token missing subject claim' }
     }
 
-    return { authenticated: true, userId: sub }
+    return { authenticated: true, userId: verified.sub }
   } catch (error: unknown) {
     // Log the error for debugging but don't expose details to client
     console.error('Token verification failed:', error instanceof Error ? error.message : 'Unknown error')
