@@ -43,7 +43,10 @@ const handler: Handler = async (event) => {
   }
 
   try {
+    console.log('Starting generate-parody function')
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
     const sql = neon(process.env.DATABASE_URL!)
+    console.log('Neon client created')
     const authHeader = event.headers.authorization
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -86,9 +89,11 @@ const handler: Handler = async (event) => {
     }
 
     // Ensure user profile exists
+    console.log('Checking existing profile for userId:', userId)
     const existingProfile = await sql`
       SELECT * FROM profiles WHERE id = ${userId}
     `
+    console.log('existingProfile result:', existingProfile.length)
 
     if (existingProfile.length === 0) {
       // Create profile for new user - no free credits, must pay
@@ -156,10 +161,17 @@ const handler: Handler = async (event) => {
     }
   } catch (error) {
     console.error('Error in generate-parody:', error)
+    // Return more detailed error in development
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : ''
+    console.error('Error details:', { message: errorMessage, stack: errorStack })
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error' }),
+      body: JSON.stringify({
+        error: 'Internal server error',
+        details: process.env.NODE_ENV !== 'production' ? errorMessage : undefined
+      }),
     }
   }
 }
