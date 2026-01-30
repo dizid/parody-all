@@ -43,10 +43,7 @@ const handler: Handler = async (event) => {
   }
 
   try {
-    console.log('Starting generate-parody function')
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
     const sql = neon(process.env.DATABASE_URL!)
-    console.log('Neon client created')
     const authHeader = event.headers.authorization
 
     if (!authHeader?.startsWith('Bearer ')) {
@@ -89,17 +86,15 @@ const handler: Handler = async (event) => {
     }
 
     // Ensure user profile exists
-    console.log('Checking existing profile for userId:', userId)
     const existingProfile = await sql`
       SELECT * FROM profiles WHERE id = ${userId}
     `
-    console.log('existingProfile result:', existingProfile.length)
 
     if (existingProfile.length === 0) {
-      // Create profile for new user - no free credits, must pay
+      // Create profile for new user - starts on free tier with 0 credits
       await sql`
         INSERT INTO profiles (id, tier, parodies_used, parodies_limit)
-        VALUES (${userId}, 'none', 0, 0)
+        VALUES (${userId}, 'free', 0, 0)
       `
     }
 
@@ -128,9 +123,11 @@ const handler: Handler = async (event) => {
     const slug = `${slugBase}-${Date.now().toString(36)}`
 
     // Create parody record with 'analyzing' status
+    // Backlink size based on tier: pro/unlimited = none, starter = small, free = large
+    const backlinkSize = profile.tier === 'pro' || profile.tier === 'unlimited' ? 'none' : profile.tier === 'starter' ? 'small' : 'large'
     const parody = (await sql`
       INSERT INTO parodies (user_id, slug, original_url, status, backlink_size, tone, theme)
-      VALUES (${userId}, ${slug}, ${url}, 'analyzing', ${profile.tier === 'pro' ? 'none' : profile.tier === 'creator' ? 'small' : 'large'}, ${tone}, ${theme})
+      VALUES (${userId}, ${slug}, ${url}, 'analyzing', ${backlinkSize}, ${tone}, ${theme})
       RETURNING *
     `)[0]
 
@@ -161,17 +158,10 @@ const handler: Handler = async (event) => {
     }
   } catch (error) {
     console.error('Error in generate-parody:', error)
-    // Return more detailed error in development
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    const errorStack = error instanceof Error ? error.stack : ''
-    console.error('Error details:', { message: errorMessage, stack: errorStack })
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({
-        error: 'Internal server error',
-        details: process.env.NODE_ENV !== 'production' ? errorMessage : undefined
-      }),
+      body: JSON.stringify({ error: 'Internal server error' }),
     }
   }
 }
