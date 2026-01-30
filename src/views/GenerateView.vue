@@ -8,6 +8,10 @@ const route = useRoute()
 const router = useRouter()
 const { getToken } = useClerkAuth()
 
+// Test mode - allows bypassing auth with ?test=<key>
+const testKey = computed(() => route.query.test as string | undefined)
+const isTestMode = computed(() => !!testKey.value)
+
 const parody = ref<Parody | null>(null)
 const loading = ref(true)
 const error = ref('')
@@ -69,11 +73,16 @@ async function fetchParody() {
   }
 
   try {
-    const token = await getToken.value()
-    const response = await fetch(`/.netlify/functions/get-parody?id=${id}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+    const headers: Record<string, string> = {}
+
+    if (!isTestMode.value) {
+      const token = await getToken.value()
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
+    const testParam = testKey.value ? `&test=${testKey.value}` : ''
+    const response = await fetch(`/.netlify/functions/get-parody?id=${id}${testParam}`, {
+      headers,
     })
     if (!response.ok) throw new Error('Failed to fetch parody')
 

@@ -47,15 +47,26 @@ const handler: Handler = async (event) => {
       parody = result[0]
     } else {
       // ID-based lookups require auth and ownership verification
-      const authResult = await verifyAuth(event.headers.authorization)
-      if (!authResult.authenticated) {
-        return unauthorizedResponse(headers, authResult.error)
-      }
+      // Allow test mode bypass
+      const isTestMode = event.queryStringParameters?.test === process.env.TEST_BYPASS_KEY && process.env.TEST_BYPASS_KEY
 
-      const result = await sql`
-        SELECT * FROM parodies WHERE id = ${id} AND (user_id = ${authResult.userId} OR user_id IS NULL) LIMIT 1
-      `
-      parody = result[0]
+      if (isTestMode) {
+        // Test mode: allow access to parodies with null user_id
+        const result = await sql`
+          SELECT * FROM parodies WHERE id = ${id} AND user_id IS NULL LIMIT 1
+        `
+        parody = result[0]
+      } else {
+        const authResult = await verifyAuth(event.headers.authorization)
+        if (!authResult.authenticated) {
+          return unauthorizedResponse(headers, authResult.error)
+        }
+
+        const result = await sql`
+          SELECT * FROM parodies WHERE id = ${id} AND (user_id = ${authResult.userId} OR user_id IS NULL) LIMIT 1
+        `
+        parody = result[0]
+      }
     }
 
     if (!parody) {

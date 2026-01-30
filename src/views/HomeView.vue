@@ -156,7 +156,8 @@ async function generateParody() {
     }
 
     const data = await response.json()
-    router.push(`/generate?id=${data.id}`)
+    const testParam = testKey.value ? `&test=${testKey.value}` : ''
+    router.push(`/generate?id=${data.id}${testParam}`)
   } catch (e: any) {
     console.error('Error starting generation:', e)
     error.value = e.message || 'Failed to start generation. Please try again.'
