@@ -12,6 +12,8 @@ import ProductCard from '../components/parody/ProductCard.vue'
 import ParodyReviews from '../components/parody/ParodyReviews.vue'
 import FeeCalculator from '../components/parody/FeeCalculator.vue'
 import ParodyFooter from '../components/parody/ParodyFooter.vue'
+import FloatingShareBar from '../components/parody/FloatingShareBar.vue'
+import ReactionBar from '../components/parody/ReactionBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -25,6 +27,7 @@ const isExpired = ref(false)
 const showShareModal = ref(false)
 const isRegenerating = ref(false)
 const regenerateError = ref('')
+const viewTracked = ref(false)
 
 // Check if current user owns this parody
 const isOwner = computed(() => {
@@ -185,12 +188,30 @@ async function fetchParody() {
     if (data.parody_data?.fees) {
       initializeFees(data.parody_data.fees.slice(0, 4))
     }
+
+    // Track view (once per page load)
+    if (!viewTracked.value && data.slug) {
+      viewTracked.value = true
+      fetch('/.netlify/functions/track-engagement', {
+        method: 'POST',
+        body: JSON.stringify({ slug: data.slug, action: 'view' }),
+      }).catch(() => {}) // Silent fail
+    }
   } catch (e) {
     error.value = 'Parody not found'
     console.error(e)
   } finally {
     loading.value = false
   }
+}
+
+// Track shares for the counter
+function trackShare(_platform: string) {
+  if (!parody.value?.slug) return
+  fetch('/.netlify/functions/track-engagement', {
+    method: 'POST',
+    body: JSON.stringify({ slug: parody.value.slug, action: 'share' }),
+  }).catch(() => {})
 }
 
 function handleAddToCart(product: Product) {
@@ -393,7 +414,7 @@ async function regenerateParody() {
             @click="shareParody"
             class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-xs font-medium transition-colors"
           >
-            📤 Share
+            🔥 Share this roast
           </button>
         </div>
       </div>
@@ -428,6 +449,24 @@ async function regenerateParody() {
           🎉 {{ easterEggMessage }}
         </div>
       </Transition>
+
+      <!-- Inline Share CTA -->
+      <div
+        v-if="parody"
+        class="text-center py-4 px-4"
+        :style="{ backgroundColor: parodyConfig?.accentColor ? parodyConfig.accentColor + '15' : 'rgba(124, 58, 237, 0.08)' }"
+      >
+        <p class="text-sm text-gray-600 mb-2">This roast is too good to keep to yourself</p>
+        <button
+          @click="shareParody"
+          class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-sm font-semibold hover:shadow-lg hover:scale-105 transition-all duration-200"
+        >
+          Share this roast 🔥
+        </button>
+        <span v-if="(parody as any).share_count >= 5" class="ml-3 text-xs text-gray-400">
+          {{ ((parody as any).share_count || 0).toLocaleString() }} shares
+        </span>
+      </div>
 
       <!-- Breaking News Ticker (for news sites) -->
       <div
@@ -908,6 +947,14 @@ async function regenerateParody() {
         </div>
       </div>
 
+      <!-- Reaction Bar -->
+      <ReactionBar
+        v-if="parody"
+        :reactions="(parody as any).reactions || { dead: 0, fire: 0, savage: 0, too_real: 0 }"
+        :slug="parody.slug"
+        @share="shareParody"
+      />
+
       <!-- Reviews Section -->
       <ParodyReviews
         v-if="parodyData?.reviews?.length"
@@ -940,6 +987,15 @@ async function regenerateParody() {
       :url="shareUrl"
       :title="parody.parody_name"
       @close="showShareModal = false"
+    />
+
+    <!-- Floating Share Bar -->
+    <FloatingShareBar
+      v-if="parody && !loading && !error"
+      :url="shareUrl"
+      :title="parody.parody_name"
+      :share-count="(parody as any).share_count || 0"
+      @share="trackShare"
     />
   </div>
 </template>

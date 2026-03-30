@@ -1,6 +1,6 @@
 // Application types
 
-export type Tier = 'none' | 'single' | 'creator' | 'pro'
+export type Tier = 'none' | 'free' | 'spark' | 'single' | 'creator' | 'pro' | 'agency'
 export type BacklinkSize = 'large' | 'small' | 'none'
 
 // Parody customization options
@@ -73,6 +73,24 @@ export interface Parody {
 
 // Pricing tiers
 export const PRICING_TIERS = {
+  free: {
+    name: 'Free',
+    price: 0,
+    parodies: 1,
+    duration: '1 week',
+    backlink: 'large' as BacklinkSize,
+    isSubscription: false,
+    features: ['1 parody site', 'Expires after 1 week', 'Watermark backlink'],
+  },
+  spark: {
+    name: 'Spark',
+    price: 9,
+    parodies: 3,
+    duration: '30 days',
+    backlink: 'large' as BacklinkSize,
+    isSubscription: false,
+    features: ['3 parody sites', 'Live for 30 days', 'Standard backlink'],
+  },
   single: {
     name: 'Single Parody',
     price: 49,
@@ -84,21 +102,30 @@ export const PRICING_TIERS = {
   },
   creator: {
     name: 'Creator',
-    price: 299,
+    price: 49,
     parodies: 10,
-    duration: '1 month',
+    duration: '6 months',
     backlink: 'small' as BacklinkSize,
     isSubscription: true,
-    features: ['10 parody sites/month', 'Sites live for 1 month', 'Small backlinks'],
+    features: ['10 active parodies', 'Live for 6 months', 'Small backlinks', 'Custom backlink URL'],
   },
   pro: {
     name: 'Pro',
-    price: 599,
+    price: 149,
     parodies: -1,
     duration: 'forever',
     backlink: 'none' as BacklinkSize,
     isSubscription: true,
-    features: ['Unlimited parodies', 'Sites never expire', 'No backlinks'],
+    features: ['Unlimited parodies', 'Never expire', 'No backlinks', 'Custom backlink URL'],
+  },
+  agency: {
+    name: 'Agency',
+    price: 399,
+    parodies: -1,
+    duration: 'forever',
+    backlink: 'none' as BacklinkSize,
+    isSubscription: true,
+    features: ['Unlimited parodies', 'Never expire', 'White-label (no branding)', 'Custom backlink URL', 'Priority generation'],
   },
 } as const
 

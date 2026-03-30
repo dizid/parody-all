@@ -272,7 +272,7 @@ function getThemeSelectedClass(theme: ParodyTheme): string {
 
         <!-- Pricing teaser -->
         <p class="mt-6 text-white/60 text-sm animate-fade-in-up animation-delay-800">
-          💰 <span class="text-yellow-400 font-semibold">From $49</span> - Premium viral content on demand
+          🎭 <span class="text-yellow-400 font-semibold">First one free</span> — upgrade from $9
         </p>
       </div>
 
@@ -479,17 +479,38 @@ function getThemeSelectedClass(theme: ParodyTheme): string {
           </p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-6">
-          <!-- Single Parody -->
+        <div class="grid md:grid-cols-4 gap-5">
+          <!-- Free -->
           <div class="rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20">
-            <div class="text-xs font-bold uppercase mb-2 text-white/60">Try It Out</div>
-            <h3 class="text-2xl font-bold mb-2">{{ PRICING_TIERS.single.name }}</h3>
+            <div class="text-xs font-bold uppercase mb-2 text-white/60">Try It</div>
+            <h3 class="text-2xl font-bold mb-2">{{ PRICING_TIERS.free.name }}</h3>
             <div class="flex items-baseline gap-1 mb-4">
-              <span class="text-4xl font-black">${{ PRICING_TIERS.single.price }}</span>
+              <span class="text-4xl font-black">$0</span>
+            </div>
+            <ul class="space-y-3 mb-6">
+              <li v-for="feature in PRICING_TIERS.free.features" :key="feature" class="flex items-center gap-2">
+                <span class="text-green-400">✓</span>
+                <span class="text-white/80">{{ feature }}</span>
+              </li>
+            </ul>
+            <button
+              @click="router.push('/login')"
+              class="w-full py-3 rounded-xl font-bold transition-all duration-300 bg-white/20 text-white hover:bg-white/30"
+            >
+              Get Started Free
+            </button>
+          </div>
+
+          <!-- Spark -->
+          <div class="rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20">
+            <div class="text-xs font-bold uppercase mb-2 text-white/60">Impulse Buy</div>
+            <h3 class="text-2xl font-bold mb-2">{{ PRICING_TIERS.spark.name }}</h3>
+            <div class="flex items-baseline gap-1 mb-4">
+              <span class="text-4xl font-black">${{ PRICING_TIERS.spark.price }}</span>
               <span class="text-white/60">one-time</span>
             </div>
             <ul class="space-y-3 mb-6">
-              <li v-for="feature in PRICING_TIERS.single.features" :key="feature" class="flex items-center gap-2">
+              <li v-for="feature in PRICING_TIERS.spark.features" :key="feature" class="flex items-center gap-2">
                 <span class="text-green-400">✓</span>
                 <span class="text-white/80">{{ feature }}</span>
               </li>
@@ -545,6 +566,16 @@ function getThemeSelectedClass(theme: ParodyTheme): string {
               Subscribe
             </button>
           </div>
+        </div>
+
+        <!-- Agency callout -->
+        <div class="mt-8 text-center">
+          <p class="text-white/60 text-sm">
+            Need white-label or team access?
+            <button @click="router.push('/login')" class="text-yellow-400 underline hover:text-yellow-300 transition-colors">
+              Agency plan — ${{ PRICING_TIERS.agency.price }}/mo
+            </button>
+          </p>
         </div>
       </div>
     </section>

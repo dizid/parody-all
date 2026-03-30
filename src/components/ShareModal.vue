@@ -19,7 +19,7 @@ const shareLinks = computed(() => {
   const encodedTitle = encodeURIComponent(props.title)
 
   return {
-    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}%20%E2%80%94%20uncomfortably%20accurate%20%F0%9F%98%82&hashtags=parody`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
     whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
     email: `mailto:?subject=${encodedTitle}&body=Check%20this%20out:%20${encodedUrl}`,
@@ -67,7 +67,7 @@ function openShare(url: string) {
           <!-- Header -->
           <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-5 text-center">
             <div class="text-3xl mb-1">📤</div>
-            <h3 class="text-xl font-bold text-white">Share this Parody</h3>
+            <h3 class="text-xl font-bold text-white">Share this roast</h3>
           </div>
 
           <!-- Content -->
@@ -93,7 +93,7 @@ function openShare(url: string) {
 
             <!-- Social Share Buttons -->
             <div>
-              <p class="text-sm text-gray-500 mb-3 text-center">Or share on:</p>
+              <p class="text-sm text-gray-500 mb-3 text-center">Your friends need to see this:</p>
               <div class="grid grid-cols-4 gap-3">
                 <!-- Twitter/X -->
                 <button

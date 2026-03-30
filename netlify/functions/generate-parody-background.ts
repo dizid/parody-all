@@ -111,6 +111,69 @@ Add fake but realistic timestamps/numbers:
 Professional statement (devastating truth in parentheses):
 - "Carbon neutral shipping (we planted one tree in 2019)"
 - "Award-winning customer service (the award was internal)"
+
+### 11. RUNNING GAG (REQUIRED)
+Pick ONE absurd internal fact and reference it at least 3 times across DIFFERENT sections.
+Each reference escalates. This creates the feeling the site is slowly confessing.
+- Hero: "We've never lost a package (we've lost 47 million packages)"
+- Trust badge tooltip: "Improved since the 47 million incident"
+- FAQ: "Q: Where is my package? A: Statistically, with the other 47 million"
+- Review: "Mine arrived! I feel special. — 1 of 47,000,001"
+
+### 12. FINE PRINT (minimum 4 instances)
+Every asterisk (*), dagger (†), or trademark (™) is a comedy slot.
+The main text is professional. The fine print reveals the devastating truth.
+- "Free 2-Day Delivery†" → "†2 days measured in business fortnights"
+- "Verified Purchase*" → "*verification is aesthetic, not functional"
+- "Carbon Neutral™" → "™we planted one tree in 2019 and never stopped bragging"
+- "Satisfaction Guaranteed*" → "*guarantee applies to our satisfaction, not yours"
+
+### 13. LEAKED INTERNAL VOICE
+Occasionally break the corporate facade with "accidental" internal notes:
+- FAQ answer that trails off: "Our refund policy is simple and— [LEGAL HAS ENTERED THE CHAT] —unfortunately we cannot process refunds at this time."
+- Trust badge tooltip: "[INTERNAL: Dave says we can't call this 'secure' anymore — Legal]"
+- Fee reason: "(margin recovery initiative Q3 — do not show to customers) ...oops"
+
+---
+
+## GOLD STANDARD EXAMPLES (study these — THIS is the quality bar)
+
+### EXCELLENT review block:
+★★★★★ "CHANGED MY LIFE!!!" [Posted 0.004 seconds after delivery]
+[Verified Purchase*] (*verification is aesthetic, not functional)
+847 people found this helpful | 0 people found this suspicious
+
+★☆☆☆☆ "I've been a Prime member for 11 years. They've gotten worse every single year. I renewed this morning. I need help." — Gerald, 54, Ohio
+[4,891 people found this uncomfortably relatable]
+
+### EXCELLENT fee stack:
+- Convenience Fee: $4.99 (for using our website instead of telepathy)
+- Fee Itemization Fee: $0.99 (for the privilege of seeing these fees listed)
+- Apology for the Fees Fee: $1.49 (we're sorry, and that costs extra)
+- Environmental Guilt Offset: $2.49 (we planted a tree. In Minecraft.)
+- Rounding Up Fee: $0.08 (we round up. Always up. Never down.)
+- Fee for Not Having Premium: $3.99 (this fee goes away if you pay us more)
+
+### EXCELLENT FAQ:
+Q: "Can I speak to a human?"
+A: "All our support agents are humans! They simply operate within a system designed to prevent them from helping you. Think of it as a human-powered maze."
+
+### EXCELLENT popup:
+Title: "WAIT! Before you leave..."
+Message: "We noticed you're about to close this tab. That's fine. We already have your data. But wouldn't you like to also give us your email? For... reasons?"
+Buttons: ["Yes, take my data" (primary), "No, but I know you'll ask again in 30 seconds"]
+
+---
+
+## BANNED CONTENT (never generate these — they are lazy and generic)
+- Any fee under $1.99 (should feel REAL and infuriating)
+- "We put customers first" without an ironic qualifier
+- Generic "hidden fees included" — be SPECIFIC about each fee
+- Trust badges without devastating tooltips (every badge needs a tooltip that undermines it)
+- Urgency messages without exposing the lie in parentheses
+- Reviews that are "mixed" — they must be POLARIZED (suspiciously perfect 5★ OR devastatingly honest 1★)
+- Product descriptions that are just "bad product" — describe WHY it's bad using corporate doublespeak
+- Any joke that could apply to ANY company — every joke must be specific to THIS site
 `
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
@@ -944,6 +1007,16 @@ Based on site_type, generate ONLY the relevant content:
   }
 }
 
+## WRITER'S ROOM TECHNIQUE
+For parody_name and heroTagline: internally generate 3 candidate options.
+Score each by: specificity (+2), "too real" factor (+3), shareability (+2), surprise (+2).
+Use ONLY the highest-scoring option. The best jokes are specific AND uncomfortably true.
+
+Example scoring for an Amazon parody name:
+1. "Bad Amazon" → score 2 (generic, boring)
+2. "Scamazon" → score 6 (punny, recognizable)
+3. "Scamazon Prime Regret™" → score 9 (specific, relatable, the ™ adds corporate voice) ✓
+
 ## QUALITY CHECKLIST (verify before responding):
 1. Would this make someone ACTUALLY laugh out loud? If not → rewrite with more specificity
 2. Is every joke site-SPECIFIC (not generic)? If generic → add company-specific details
@@ -951,6 +1024,9 @@ Based on site_type, generate ONLY the relevant content:
 4. Would someone screenshot this to share with friends? If not → it needs more punch
 5. Are reviews a MIX of obviously fake praise AND relatable complaints?
 6. Does the parody LOOK like the original site (colors, structure)?
+7. Is there a RUNNING GAG that appears at least 3 times across different sections?
+8. Are there at least 4 FINE PRINT reveals (asterisks/daggers with devastating truths)?
+9. Is NOTHING from the BANNED CONTENT list present?
 
 Return ONLY valid JSON, no markdown code blocks or explanations.`
 }
@@ -1055,6 +1131,7 @@ const handler: Handler = async (event) => {
     let response = await callClaudeWithRetry(anthropic, {
       model: 'claude-sonnet-4-20250514',
       max_tokens: 8000,
+      system: `You are a master satirist working at Onion-level absurdism (8/10 on the absurdity scale). Your professional tone is impeccable — corporate formatting, serious voice, polished language. Your content is increasingly unhinged. The widening gap between your formal voice and your chaotic content IS the joke. You never write safe, generic jokes. Specificity is your weapon. Every piece of content should make someone screenshot it and send it to a friend.`,
       messages: [{ role: 'user', content: buildPrompt(url, analysis, tone, theme) }],
     })
 
@@ -1077,6 +1154,7 @@ const handler: Handler = async (event) => {
       response = await callClaudeWithRetry(anthropic, {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 8000,
+        system: `You are a master satirist working at Onion-level absurdism (8/10 on the absurdity scale). Your professional tone is impeccable — corporate formatting, serious voice, polished language. Your content is increasingly unhinged. The widening gap between your formal voice and your chaotic content IS the joke. You never write safe, generic jokes. Specificity is your weapon. Every piece of content should make someone screenshot it and send it to a friend.`,
         messages: [{ role: 'user', content: buildRetryPrompt(url, validation.issues, analysis, tone, theme) }],
       })
 

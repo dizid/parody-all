@@ -41,6 +41,12 @@ CREATE TABLE IF NOT EXISTS parodies (
 -- Migration: Add error_message column if it doesn't exist
 -- ALTER TABLE parodies ADD COLUMN IF NOT EXISTS error_message TEXT;
 
+-- Engagement tracking columns
+-- Run these as migrations on existing database:
+-- ALTER TABLE parodies ADD COLUMN IF NOT EXISTS view_count INT DEFAULT 0;
+-- ALTER TABLE parodies ADD COLUMN IF NOT EXISTS share_count INT DEFAULT 0;
+-- ALTER TABLE parodies ADD COLUMN IF NOT EXISTS reactions JSONB DEFAULT '{"dead":0,"fire":0,"savage":0,"too_real":0}';
+
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_parodies_user_id ON parodies(user_id);
 CREATE INDEX IF NOT EXISTS idx_parodies_slug ON parodies(slug);

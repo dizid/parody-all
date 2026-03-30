@@ -70,8 +70,8 @@ const handler: Handler = async (event) => {
     // Get origin for redirect URLs
     const origin = event.headers.origin || event.headers.referer || 'http://localhost:8888'
 
-    // Determine checkout mode based on tier (subscriptions for creator/pro)
-    const isSubscription = tier === 'creator' || tier === 'pro'
+    // Determine checkout mode based on tier (subscriptions for creator/pro/agency)
+    const isSubscription = tier === 'creator' || tier === 'pro' || tier === 'agency'
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({

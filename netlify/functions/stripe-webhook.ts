@@ -49,15 +49,23 @@ const handler: Handler = async (event) => {
           break
         }
 
-        // Handle one-time single parody purchase
+        // Handle one-time purchases (single or spark)
         if (priceId === process.env.STRIPE_SINGLE_PRICE_ID) {
           await sql`
             UPDATE profiles
             SET parodies_limit = parodies_limit + 1,
-                tier = CASE WHEN tier = 'none' THEN 'single' ELSE tier END
+                tier = CASE WHEN tier IN ('none', 'free') THEN 'single' ELSE tier END
             WHERE id = ${userId}
           `
           console.log(`Added 1 credit to user ${userId} (single purchase)`)
+        } else if (priceId === process.env.STRIPE_SPARK_PRICE_ID) {
+          await sql`
+            UPDATE profiles
+            SET parodies_limit = parodies_limit + 3,
+                tier = CASE WHEN tier IN ('none', 'free') THEN 'spark' ELSE tier END
+            WHERE id = ${userId}
+          `
+          console.log(`Added 3 credits to user ${userId} (spark purchase)`)
         } else {
           // Legacy: add credits from metadata
           const credits = parseInt(session.metadata?.credits || '1', 10)
@@ -97,6 +105,9 @@ const handler: Handler = async (event) => {
           limit = 10
         } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
           tier = 'pro'
+          limit = -1 // Unlimited
+        } else if (priceId === process.env.STRIPE_AGENCY_PRICE_ID) {
+          tier = 'agency'
           limit = -1 // Unlimited
         }
 
