@@ -153,7 +153,7 @@ async function saveCreatorUrl() {
   }
 }
 
-async function purchaseCredits(tier: 'single' | 'creator' | 'pro' = 'single') {
+async function purchaseCredits(tier: 'spark' | 'creator' = 'spark') {
   if (!user.value) return
 
   isPurchasing.value = true
@@ -300,7 +300,7 @@ function getStatusBadge(status: string) {
           </div>
         </div>
         <button
-          @click="purchaseCredits('single')"
+          @click="purchaseCredits('spark')"
           :disabled="isPurchasing"
           class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl font-medium transition-colors disabled:opacity-50"
         >
@@ -350,17 +350,17 @@ function getStatusBadge(status: string) {
       <h2 class="text-2xl font-bold mb-2" style="color: var(--color-text-primary);">Get Credits to Generate Parodies</h2>
       <p class="mb-6" style="color: var(--color-text-secondary);">Choose a plan that works for you</p>
 
-      <div class="grid md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-        <!-- Single -->
+      <div class="grid md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        <!-- Spark -->
         <div class="rounded-xl p-4 border" style="border-color: var(--color-border);">
-          <h3 class="font-bold" style="color: var(--color-text-primary);">{{ PRICING_TIERS.single.name }}</h3>
-          <p class="text-2xl font-black text-purple-600">${{ PRICING_TIERS.single.price }}</p>
-          <p class="text-sm mb-3" style="color: var(--color-text-secondary);">one-time</p>
+          <h3 class="font-bold" style="color: var(--color-text-primary);">{{ PRICING_TIERS.spark.name }}</h3>
+          <p class="text-2xl font-black text-purple-600">${{ PRICING_TIERS.spark.price }}</p>
+          <p class="text-sm mb-3" style="color: var(--color-text-secondary);">3 parodies, one-time</p>
           <button
-            @click="purchaseCredits('single')"
+            @click="purchaseCredits('spark')"
             class="w-full bg-purple-100 text-purple-700 py-2 rounded-lg font-medium hover:bg-purple-200 transition-colors"
           >
-            Buy Now
+            Buy Now — $9
           </button>
         </div>
 
@@ -374,20 +374,7 @@ function getStatusBadge(status: string) {
             @click="purchaseCredits('creator')"
             class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 py-2 rounded-lg font-bold hover:shadow-lg transition-all"
           >
-            Subscribe
-          </button>
-        </div>
-
-        <!-- Pro -->
-        <div class="rounded-xl p-4 border" style="border-color: var(--color-border);">
-          <h3 class="font-bold" style="color: var(--color-text-primary);">{{ PRICING_TIERS.pro.name }}</h3>
-          <p class="text-2xl font-black text-purple-600">${{ PRICING_TIERS.pro.price }}<span class="text-sm font-normal">/mo</span></p>
-          <p class="text-sm mb-3" style="color: var(--color-text-secondary);">Unlimited parodies</p>
-          <button
-            @click="purchaseCredits('pro')"
-            class="w-full bg-purple-100 text-purple-700 py-2 rounded-lg font-medium hover:bg-purple-200 transition-colors"
-          >
-            Subscribe
+            Subscribe — $49/mo
           </button>
         </div>
       </div>

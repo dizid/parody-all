@@ -1,6 +1,7 @@
 // Application types
 
-export type Tier = 'none' | 'free' | 'spark' | 'single' | 'creator' | 'pro' | 'agency'
+// Active tiers + legacy values for backward compat with existing DB rows
+export type Tier = 'none' | 'free' | 'spark' | 'creator' | 'single' | 'pro' | 'agency'
 export type BacklinkSize = 'large' | 'small' | 'none'
 
 // Parody style modifiers — simplified from 24 combos to 3 clear options
@@ -67,16 +68,16 @@ export interface Parody {
   created_at: string
 }
 
-// Pricing tiers
+// Pricing tiers — 3 simple tiers, no fluff
 export const PRICING_TIERS = {
   free: {
     name: 'Free',
     price: 0,
-    parodies: 1,
+    parodies: 2,
     duration: '1 week',
     backlink: 'large' as BacklinkSize,
     isSubscription: false,
-    features: ['1 parody site', 'Expires after 1 week', 'Watermark backlink'],
+    features: ['2 parody sites', 'Expires after 1 week', 'Share to support us'],
   },
   spark: {
     name: 'Spark',
@@ -87,15 +88,6 @@ export const PRICING_TIERS = {
     isSubscription: false,
     features: ['3 parody sites', 'Live for 30 days', 'Standard backlink'],
   },
-  single: {
-    name: 'Single Parody',
-    price: 49,
-    parodies: 1,
-    duration: '1 week',
-    backlink: 'large' as BacklinkSize,
-    isSubscription: false,
-    features: ['1 parody site', 'Expires after 1 week', 'Promotional backlinks'],
-  },
   creator: {
     name: 'Creator',
     price: 49,
@@ -104,24 +96,6 @@ export const PRICING_TIERS = {
     backlink: 'small' as BacklinkSize,
     isSubscription: true,
     features: ['10 active parodies', 'Live for 6 months', 'Small backlinks', 'Custom backlink URL'],
-  },
-  pro: {
-    name: 'Pro',
-    price: 149,
-    parodies: -1,
-    duration: 'forever',
-    backlink: 'none' as BacklinkSize,
-    isSubscription: true,
-    features: ['Unlimited parodies', 'Never expire', 'No backlinks', 'Custom backlink URL'],
-  },
-  agency: {
-    name: 'Agency',
-    price: 399,
-    parodies: -1,
-    duration: 'forever',
-    backlink: 'none' as BacklinkSize,
-    isSubscription: true,
-    features: ['Unlimited parodies', 'Never expire', 'White-label (no branding)', 'Custom backlink URL', 'Priority generation'],
   },
 } as const
 

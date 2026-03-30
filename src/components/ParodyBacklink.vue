@@ -38,7 +38,7 @@ const floatingClasses = {
     >
       <span class="text-lg" v-if="size === 'large'">🎭</span>
       <span v-if="size === 'large'">
-        Create your own parody site at <strong>ParodyHumor.lol</strong>
+        Enjoyed this roast? Make your own free at <strong>ParodyHumor.lol</strong>
       </span>
       <span v-else>
         Made with ParodyHumor.lol
@@ -60,9 +60,9 @@ const floatingClasses = {
       target="_blank"
       class="hover:underline inline-flex items-center gap-2"
     >
-      <span v-if="size === 'large'">🎭 This parody was created with </span>
+      <span v-if="size === 'large'">🎭 This roast was made with </span>
       <strong>ParodyHumor.lol</strong>
-      <span v-if="size === 'large'"> - Turn any website into comedy gold!</span>
+      <span v-if="size === 'large'"> — Create yours free!</span>
     </a>
   </div>
 

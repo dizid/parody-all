@@ -99,16 +99,10 @@ const handler: Handler = async (event) => {
         let tier = 'none'
         let limit = 0
 
-        // Map price IDs to tiers
+        // Map price IDs to tiers (only creator is subscription now)
         if (priceId === process.env.STRIPE_CREATOR_PRICE_ID) {
           tier = 'creator'
           limit = 10
-        } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
-          tier = 'pro'
-          limit = -1 // Unlimited
-        } else if (priceId === process.env.STRIPE_AGENCY_PRICE_ID) {
-          tier = 'agency'
-          limit = -1 // Unlimited
         }
 
         // Reset parodies_used on new subscription/renewal

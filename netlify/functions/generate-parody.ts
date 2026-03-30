@@ -137,10 +137,10 @@ const handler: Handler = async (event) => {
       `
 
       if (existingProfile.length === 0) {
-        // Create profile for new user - starts on free tier with 1 free parody credit
+        // Create profile for new user - starts on free tier with 2 free parody credits
         await sql`
           INSERT INTO profiles (id, tier, parodies_used, parodies_limit)
-          VALUES (${userId}, 'free', 0, 1)
+          VALUES (${userId}, 'free', 0, 2)
         `
       }
 
@@ -170,10 +170,10 @@ const handler: Handler = async (event) => {
     const slug = `${slugBase}-${Date.now().toString(36)}`
 
     // Create parody record with 'analyzing' status
-    // Backlink size based on tier: pro/agency = none, creator = small, free/spark/single = large
-    const backlinkSize = ['pro', 'agency'].includes(profile.tier) ? 'none' : profile.tier === 'creator' ? 'small' : 'large'
-    // Get creator URL from profile (only for paid subscribers)
-    const creatorUrl = ['creator', 'pro', 'agency'].includes(profile.tier) ? (profile.creator_url || null) : null
+    // Backlink size based on tier: creator = small, everyone else = large
+    const backlinkSize = profile.tier === 'creator' ? 'small' : 'large'
+    // Get creator URL from profile (only for creator tier)
+    const creatorUrl = profile.tier === 'creator' ? (profile.creator_url || null) : null
     const parody = (await sql`
       INSERT INTO parodies (user_id, slug, original_url, status, backlink_size, creator_url, tone, theme)
       VALUES (${userId}, ${slug}, ${url}, 'analyzing', ${backlinkSize}, ${creatorUrl}, ${tone}, ${theme})
