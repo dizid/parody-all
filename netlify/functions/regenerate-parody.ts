@@ -69,7 +69,7 @@ const handler: Handler = async (event) => {
       body: JSON.stringify({
         parodyId: parody.id,
         url: parody.original_url,
-        tone: parody.tone || 'negative',
+        tone: parody.tone || 'standard',
         theme: parody.theme || 'default',
       }),
     }).catch(err => console.error('Failed to invoke background function:', err))

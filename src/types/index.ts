@@ -3,41 +3,37 @@
 export type Tier = 'none' | 'free' | 'spark' | 'single' | 'creator' | 'pro' | 'agency'
 export type BacklinkSize = 'large' | 'small' | 'none'
 
-// Parody customization options
-export type ParodyTone = 'positive' | 'negative' | 'balanced' | 'erotic'
+// Parody style modifiers — simplified from 24 combos to 3 clear options
+export type ParodyTone = 'standard' | 'erotic' | 'dark'
+// Theme kept for backward compat with existing parodies but no longer user-selectable
 export type ParodyTheme = 'default' | 'christmas' | 'easter' | 'sport' | 'sensual' | 'retro'
 
-// Tone configuration for display
+// Style configuration for display (the 2 optional modifiers + default)
 export const PARODY_TONES: Record<ParodyTone, { icon: string; label: string; description: string }> = {
-  positive: {
-    icon: '😊',
-    label: 'Positive',
-    description: 'Exaggerate the good to absurd levels - "too perfect to be real"'
-  },
-  negative: {
-    icon: '😈',
-    label: 'Negative',
-    description: 'Expose dark patterns, hidden fees, and frustrations'
-  },
-  balanced: {
-    icon: '⚖️',
-    label: 'Balanced',
-    description: 'Mix of praise and criticism - satirical but fair'
+  standard: {
+    icon: '🎭',
+    label: 'Standard',
+    description: 'Satirical roast — dark patterns, hidden fees, corporate BS exposed'
   },
   erotic: {
     icon: '🔥',
-    label: 'Erotic',
-    description: 'Seductive and steamy - innuendos everywhere'
+    label: 'Sexy',
+    description: 'Seductive innuendo — everything is a double entendre'
+  },
+  dark: {
+    icon: '💀',
+    label: 'Dark',
+    description: 'Black humor — existential dread meets corporate nihilism'
   },
 }
 
-// Theme configuration for display
-export const PARODY_THEMES: Record<ParodyTheme, { icon: string; label: string }> = {
+// Legacy theme configs (kept for backward compat display of old parodies)
+export const PARODY_THEMES: Record<string, { icon: string; label: string }> = {
   default: { icon: '🎭', label: 'Default' },
-  christmas: { icon: '🎄', label: 'Kerst' },
-  easter: { icon: '🐰', label: 'Pasen' },
+  christmas: { icon: '🎄', label: 'Christmas' },
+  easter: { icon: '🐰', label: 'Easter' },
   sport: { icon: '⚽', label: 'Sport' },
-  sensual: { icon: '💋', label: 'Sensueel' },
+  sensual: { icon: '💋', label: 'Sensual' },
   retro: { icon: '📺', label: 'Retro' },
 }
 

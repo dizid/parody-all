@@ -177,344 +177,92 @@ Buttons: ["Yes, take my data" (primary), "No, but I know you'll ask again in 30 
 `
 
 const TONE_INSTRUCTIONS: Record<string, string> = {
-  positive: `
-## HUMOR STYLE: POSITIVE (Satirical Utopia) ⭐
+  standard: `
+## HUMOR STYLE: STANDARD (Satirical Roast) 🎭
 
-THIS TONE MUST BE UNMISTAKABLY OBVIOUS. Every piece of content should DRIP with suspicious positivity.
+The default parody style. Corporate voice + unhinged content. Expose dark patterns, hidden fees, and the gap between marketing promises and reality.
 
-### MANDATORY REQUIREMENTS (you MUST include ALL of these):
-1. ALL reviews must be 5 stars - NO EXCEPTIONS. Not a single review under 5 stars.
-2. At least 3 products/services that promise IMPOSSIBLE benefits (cures diseases, fixes relationships, etc.)
-3. At least 2 "negative fees" where THEY pay YOU
-4. Every product description must use words like: "LIFE-CHANGING", "REVOLUTIONARY", "MIRACULOUS"
-5. At least 1 announcement about winning an award they gave themselves
-6. Reviews must use CAPS LOCK excitement: "BEST. PURCHASE. EVER!!!"
-
-### DO NOT (violations break the tone):
-- DO NOT include ANY negative reviews or complaints
-- DO NOT include ANY realistic problems or delays
-- DO NOT use words like "unfortunately", "sorry", "issue", "problem"
-- DO NOT have any fees that cost money - all fees should REFUND money
-
-### EXAMPLES:
-**Reviews**: All 5 stars, suspiciously perfect
-  - "This product CHANGED MY LIFE in ways I cannot legally describe! My doctor is baffled!"
-  - "I've never been happier. My family staged an intervention because I smile too much now."
-  - "Arrived 3 days BEFORE I ordered it. They're basically psychic."
-
-**Products/Services**: Solve impossible problems
-  - "Cures loneliness AND improves credit score simultaneously"
-  - "Delivery before you even think about ordering"
-  - "Side effects include: excessive happiness, sudden wealth, improved posture"
-
-**Fees**: Negative fees (they pay YOU)
-  - "Loyalty discount: -$50.00 (we pay YOU)"
-  - "Being awesome rebate: -$25.00"
-  - "Thank you for shopping credit: -$10.00"
-  - "Apology for making you wait 0.3 seconds: -$5.00"
-
-**Urgency**: Overwhelmingly positive urgency
-  - "Only 3 more chances to achieve permanent happiness!"
-  - "⭐ HURRY! Life-changing moments almost sold out! ⭐"
-
-**Overall vibe**: So positive it's unsettling. Like a cult recruitment ad.
-`,
-
-  negative: `
-## HUMOR STYLE: NEGATIVE (Dark Pattern Exposé) 🔥
-
-THIS TONE MUST BE UNMISTAKABLY OBVIOUS. This is an EXPOSÉ of corporate greed and dark patterns.
-
-### MANDATORY REQUIREMENTS (you MUST include ALL of these):
-1. At least 4 "features" that are actually bugs/problems reframed as benefits
+### REQUIREMENTS:
+1. Reviews: MIX of fake 5-stars (posted suspiciously fast) AND brutal 1-star complaints
 2. At least 5 hidden fees that stack absurdly (total should exceed product price)
-3. Reviews must be a MIX: fake 5-stars (posted suspiciously fast) AND brutal 1-star complaints
-4. At least 2 "Only X left!" scarcity messages with parenthetical reveals like "(we've said this since 2019)"
-5. Product descriptions that use corporate doublespeak to hide terrible things
-6. At least 1 popup that's impossible to close or has confusing button labels
-7. Shipping times that are lies: "2-day shipping*" (*may take 2 weeks)
-
-### DO NOT (violations break the tone):
-- DO NOT include genuine positive statements without an ironic twist
-- DO NOT have any fees under $1.99 - they should feel REAL and annoying
-- DO NOT let any scarcity claim be believable - always expose the lie
-- DO NOT write reviews that are "mixed" - they should be POLARIZED (fake 5s OR angry 1s)
+3. At least 4 "features" that are actually bugs/problems reframed as benefits
+4. Scarcity messages with parenthetical reveals: "Only 2 left! (we've said this since 2019)"
+5. Corporate doublespeak hiding terrible things
+6. At least 1 popup with confusing/manipulative button labels
 
 ### EXAMPLES:
-**Reviews**: Polarized - obviously fake praise vs. brutal honesty
-  - Fake 5★: "Life changing! [Posted 2 seconds after delivery] [Verified Purchase*] (*verification not verified)"
-  - Real 1★: "Package arrived open. Contents missing. Customer service said 'that's a feature.' 6-week refund process."
-  - Real 2★: "I've been a customer for 10 years. They've gotten worse every year. But I keep coming back like an idiot."
+- Fake 5★: "Life changing! [Posted 0.004 seconds after delivery] [Verified Purchase*] (*verification is aesthetic, not functional)"
+- Real 1★: "I've been a customer for 11 years. They've gotten worse every year. I renewed this morning. I need help." — Gerald, Ohio
+- Fee: "Convenience of using our website instead of telepathy: $4.99"
+- Product: "Delayed Delivery™ Premium Experience — Savor the anticipation"
+- Urgency: "🔥 Only 2 left! (Our database shows 47,000 units)"
 
-**Products/Services**: Bugs are features
-  - Product: "Delayed Delivery™ Premium Experience"
-  - Description: "Savor the anticipation with our industry-leading 3-week tracking adventure"
-  - Product: "Random Item Roulette"
-  - Description: "You ordered blue? How boring. We sent chartreuse. You're welcome."
-
-**Fees**: Absurd stacking (must feel infuriating)
-  - "Convenience of using our website: $4.99"
-  - "Fee for not being a Prime member: $3.99"
-  - "Environmental guilt offset: $2.49"
-  - "Fee explanation fee: $0.99"
-  - "Rounding up fee (we round up): $0.47"
-  - "Breathing during checkout fee: $1.99"
-
-**Urgency**: Exposed lies
-  - "🔥 Only 2 left in stock! (Our database shows 47,000 units)"
-  - "47 people viewing right now! (It's actually just you and our bot)"
-  - "Sale ends in 2 HOURS! (It's been '2 hours' for 6 months)"
-
-**Overall vibe**: Makes users say "Holy shit, this is literally what they do to me"
-`,
-
-  balanced: `
-## HUMOR STYLE: BALANCED (Realistic Absurdity) ⚖️
-
-THIS TONE MUST BE UNMISTAKABLY OBVIOUS. The humor is in the COGNITIVE DISSONANCE - things are simultaneously good and bad.
-
-### MANDATORY REQUIREMENTS (you MUST include ALL of these):
-1. Every product MUST have both a genuine benefit AND a significant drawback in the same description
-2. Reviews must span the FULL range: 1★, 2★, 3★, 4★, and 5★ - showing genuine disagreement
-3. At least 3 fees that have "reasonable" explanations that don't quite add up
-4. Every urgency message must undercut itself: "Sale ends soon! (but honestly, we'll probably extend it)"
-5. At least 2 reviews where the reviewer gives 5 stars despite listing multiple complaints
-6. Product names that hint at both quality AND problems
-
-### DO NOT (violations break the tone):
-- DO NOT be purely negative or purely positive - ALWAYS balance
-- DO NOT have reviews all cluster around 3-4 stars - use the FULL range
-- DO NOT make fees feel purely evil - they should feel "understandable but annoying"
-- DO NOT create urgency without immediately deflating it
-
-### EXAMPLES:
-**Reviews**: Full spectrum with cognitive dissonance
-  - 5★: "Amazing quality! Sure, it broke twice and customer service ghosted me, but the color is perfect. Would buy again."
-  - 3★: "Exactly what I expected: mediocre. Not bad enough to return, not good enough to recommend."
-  - 1★: "Worked perfectly for 2 days then caught fire. But those were a great 2 days. Conflicted."
-  - 4★: "Taking off one star because it arrived early and I wasn't emotionally prepared."
-
-**Products/Services**: Good AND terrible simultaneously
-  - "Premium Headphones - Incredible sound quality, mysterious 47% battery drain overnight"
-  - "Fast Shipping Plus - Arrives in 2 days (packaging may arrive separately in 2 weeks)"
-  - "Customer Support Pro - Real humans! (who are very tired and kind of sad)"
-
-**Fees**: Exist with "reasonable" justifications
-  - "Service fee: $3.99 (because servers cost money, we think?)"
-  - "Handling fee: $1.99 (someone definitely touched your package)"
-  - "Processing fee: $2.49 (we're not sure what this processes)"
-  - "Convenience fee: $1.99 (inconvenience fee was focus-grouped poorly)"
-
-**Urgency**: Self-undermining
-  - "⏰ Sale ends tonight! (We'll probably extend it. We always do.)"
-  - "Only 5 left! (We have more in the back, but still, 5 sounds urgent)"
-  - "ORDER NOW! (or later, we're not your mom)"
-
-**Overall vibe**: "I can't tell if this is good or bad, and that's exactly how I feel about the real thing"
+**Vibe**: Makes users say "Holy shit, this is literally what they do to me"
 `,
 
   erotic: `
-## HUMOR STYLE: EROTIC (Seductive Satire) 💋
+## HUMOR STYLE: EROTIC (Seductive Satire) 🔥
 
-THIS TONE MUST BE UNMISTAKABLY OBVIOUS. The website should feel like it's FLIRTING with the user.
+The website is FLIRTING with the user. Everything is a double entendre. Innuendo, not explicit.
 
-### MANDATORY REQUIREMENTS (you MUST include ALL of these):
-1. EVERY product name must be a double entendre (works both innocently AND suggestively)
-2. ALL reviews must use breathless, romance-novel language
-3. At least 3 fees with suggestive names: "Extended Protection", "Premium Handling", etc.
-4. Every CTA button must be flirtatious: "Add to Cart (you know you want to)"
-5. At least 2 announcements that read like pickup lines
-6. Product descriptions must use words like: "intimate", "satisfaction", "pleasure", "deep", "throbbing" (for deals)
-7. Urgency messages must create romantic tension: "Don't keep us waiting..."
+### REQUIREMENTS:
+1. EVERY product name must be a double entendre (works innocently AND suggestively)
+2. ALL reviews use breathless, romance-novel language
+3. At least 3 fees with suggestive names: "Extended Protection", "Premium Handling"
+4. Every CTA button is flirtatious: "Add to Cart (you know you want to)"
+5. Announcements read like pickup lines
+6. Urgency creates romantic tension: "Don't keep us waiting..."
+7. Product descriptions use: "intimate", "satisfaction", "pleasure", "deep"
 
-### DO NOT (violations break the tone):
-- DO NOT be crude or explicit - this is INNUENDO, not pornography
-- DO NOT use words that are only sexual - everything must work on two levels
-- DO NOT forget humor - this should make people LAUGH while blushing
-- DO NOT be creepy - flirty and playful, not uncomfortable
+### KEY RULE: Clever innuendo > crude jokes. Suggestive > explicit. BOTH innocent AND suggestive simultaneously.
 
 ### EXAMPLES:
-**Product Names**: Must work on two levels
-  - "The Pleasure Package™" (shipping option)
-  - "Deep Satisfaction Guarantee" (returns policy)
-  - "All-Night Customer Service" (support)
-  - "The Big O(rder)" (checkout)
-  - "Maximum Penetration Pricing" (deals)
+- Product: "The Pleasure Package™" (shipping option) / "Deep Satisfaction Guarantee" (returns policy)
+- Review: "I've never experienced such... thorough packaging. I needed a moment. 10/10 would unwrap again."
+- Fee: "Premium Handling Fee: $4.99 (worth every penny)" / "Extended Pleasure Protection: $9.99/month"
+- CTA: "Buy Now — We'll Be Gentle" / "Complete Purchase (Satisfaction Guaranteed 😏)"
+- Urgency: "💋 Things are heating up... only 3 left in stock"
+- Announcement: "🔥 HOT DEAL: Is it warm in here, or is it just our prices?"
 
-**Reviews**: Breathless testimonials
-  - "I've never experienced such... thorough packaging. I needed a moment. 10/10 would unwrap again."
-  - "It arrived faster than expected. I wasn't ready. Neither were my neighbors who heard my reaction."
-  - "I thought I knew what I wanted. This showed me SO much more. My expectations have been... raised."
-  - "We've been together for 6 months now. The honeymoon phase hasn't ended."
+**Vibe**: "Is this website... flirting with me? I think I like it."
+`,
 
-**Urgency**: Romantic tension
-  - "💋 Things are heating up... only 3 left in stock"
-  - "Don't keep us waiting. We're ready when you are."
-  - "Others are eyeing your cart right now... feeling jealous?"
-  - "This chemistry won't last forever... (sale ends midnight)"
+  dark: `
+## HUMOR STYLE: DARK (Black Humor / Corporate Nihilism) 💀
 
-**Fees**: Suggestive but classy
-  - "Premium Handling Fee: $4.99 (worth every penny)"
-  - "Extended Pleasure Protection: $9.99/month"
-  - "Discreet Packaging Surcharge: $2.99 (we won't tell)"
-  - "Aftercare Support Fee: $1.99"
+The company KNOWS it's evil and has stopped pretending. Existential dread meets corporate efficiency. Gallows humor delivered in a cheerful corporate voice.
 
-**CTAs**: Flirtatious
-  - "Add to Cart (You know you want to)"
-  - "Buy Now - We'll Be Gentle"
-  - "Subscribe & Let Us Take Care of You"
-  - "Complete Purchase (Satisfaction Guaranteed 😏)"
+### REQUIREMENTS:
+1. The company openly acknowledges its own awfulness in a matter-of-fact tone
+2. At least 3 products/services that hint at dystopian or existential consequences
+3. Reviews where customers describe genuinely disturbing experiences but rate 5 stars anyway
+4. Fees that are morally questionable: "Soul Depreciation Fee", "Hope Processing Charge"
+5. FAQ answers that casually reveal horrifying truths
+6. At least 2 employee quotes that suggest they need help
+7. Trust badges that are deeply unsettling: "Nobody Has Died*" (*recently)
 
-**Announcements**: Pickup lines as promotions
-  - "🔥 HOT DEAL: Is it warm in here, or is it just our prices?"
-  - "MIDNIGHT SPECIAL: When the sun goes down, things get interesting"
-  - "💋 MEMBERS ONLY: Exclusive access to our private collection"
+### KEY RULE: The horror is CASUAL. The company treats terrible things as normal. The contrast between cheerful corporate tone and bleak content IS the joke.
 
-**Overall vibe**: "Is this website... flirting with me? I think I like it."
+### EXAMPLES:
+- Product: "The Last Item You'll Ever Need™" — "We mean that in the most ominous way possible"
+- Review 5★: "My therapist said this purchase was a cry for help. But it arrived on time, so who's really winning here?"
+- Review 1★: "I can no longer feel joy. But the product works as described. Conflicted."
+- Fee: "Existential Dread Surcharge: $3.99 (you were going to feel it anyway)"
+- Fee: "Data Harvesting Transparency Fee: $1.99 (we already have your data, this is just polite)"
+- FAQ: "Q: Is this ethical? A: We have a Chief Ethics Officer. She quit last month. We're counting that as a yes."
+- Trust badge: "🏆 Voted 'Not the Worst' by an internal poll" — tooltip: "3 out of 5 employees participated. 2 have since left."
+- Announcement: "We're aware of the situation. We've chosen to ignore it. Happy shopping! 💀"
+- Employee quote: "[INTERNAL — DO NOT PUBLISH] I don't know what we sell anymore. I just know the quarterly numbers are up. — Dave, CFO"
+- Popup: "Before you leave: we want you to know that your data will miss you."
 
-### KEY PRINCIPLE:
-Clever innuendo > crude jokes. Suggestive > explicit. The humor works because it's BOTH innocent AND suggestive at the same time.
+**Vibe**: "This company has become self-aware and it's terrifying. I can't stop reading."
 `,
 }
 
+// Theme instructions removed — themes no longer user-selectable
+// Kept as empty map for backward compat with existing code paths
 const THEME_INSTRUCTIONS: Record<string, string> = {
-  default: '', // No theme overlay
-
-  christmas: `
-## THEME OVERLAY: CHRISTMAS 🎄
-
-THIS THEME MUST BE UNMISTAKABLY VISIBLE. The parody should SCREAM holidays.
-
-### MANDATORY REQUIREMENTS (you MUST include ALL of these):
-1. At least 1 announcement with "12 Days of [something disappointing]" sale
-2. At least 3 products/items with gift-related jokes (gift wrapping problems, returns, regifting)
-3. Shipping deadline that has ALREADY PASSED: "Order by Dec 24th!" (when it's Dec 26th)
-4. At least 2 holiday-specific fees: "Gift Wrap Anxiety Fee", "Holiday Spirit Surcharge"
-5. Reviews mentioning gifts: "Gave this to my mother-in-law. Relationship status: unchanged."
-6. Use Christmas emojis: 🎄🎁❄️🎅 (at least 5 total across content)
-7. accentColor MUST be Christmas red (#dc2626) or green (#16a34a)
-
-### COLOR RULES:
-  - primaryColor: Keep original site color
-  - secondaryColor: Christmas green (#16a34a)
-  - accentColor: Christmas red (#dc2626) or gold (#fbbf24)
-
-### CONTENT EXAMPLES:
-  - Product: "The Gift That Keeps on Disappointing™"
-  - Announcement: "🎄 12 Days of Shipping Delays - Day 47! 🎄"
-  - Fee: "Holiday Cheer Processing: $4.99"
-  - Review: "Santa brought this. He's off the Nice List now."
-  - Urgency: "🎅 Order by Dec 24th for guaranteed delivery by Dec 24th (2027)"
-`,
-
-  easter: `
-## THEME OVERLAY: EASTER 🐰
-
-THIS THEME MUST BE UNMISTAKABLY VISIBLE. Pastels, puns, and spring energy everywhere.
-
-### MANDATORY REQUIREMENTS (you MUST include ALL of these):
-1. At least 5 egg-related puns in product names/descriptions: "Egg-ceptional", "Egg-straordinary"
-2. At least 1 "Easter Egg Hunt" sale or hidden discount
-3. Pastel color scheme influences - pink, lavender, yellow accents
-4. At least 2 bunny-related jokes in reviews or descriptions
-5. Use Easter emojis: 🐰🥚🌷🐣 (at least 5 total)
-6. Spring renewal jokes: "Fresh start! (Same problems, new season)"
-7. accentColor MUST be pastel pink (#ec4899) or lavender (#a855f7)
-
-### COLOR RULES:
-  - primaryColor: Keep original site color
-  - secondaryColor: Lavender (#a855f7)
-  - accentColor: Pastel pink (#ec4899)
-
-### CONTENT EXAMPLES:
-  - Product: "Egg-streme Value Bundle™"
-  - Announcement: "🐰 Hop to it! Spring Sale-abration! 🌷"
-  - Fee: "Easter Basket Assembly Fee: $3.99"
-  - Review: "Found this in my Easter basket. The bunny has questionable taste."
-  - Badge: "🥚 Certified Egg-cellent"
-`,
-
-  sport: `
-## THEME OVERLAY: SPORT ⚽🏆
-
-THIS THEME MUST BE UNMISTAKABLY VISIBLE. Everything is a competition.
-
-### MANDATORY REQUIREMENTS (you MUST include ALL of these):
-1. At least 3 products positioned as "Champion's Choice" or "MVP Pick"
-2. Stadium-style fees: "Stadium Convenience Fee", "Instant Replay Fee", "Sideline Access Surcharge"
-3. Sports metaphors in ALL urgency messages: "Final quarter!", "Overtime pricing!"
-4. Reviews written like sports commentary: "A STUNNING performance by this product!"
-5. Use sports emojis: ⚽🏆🥇🏅🏈 (at least 5 total)
-6. Scoreboard-style badges: "WINNING", "CHAMPION VERIFIED"
-7. accentColor MUST be bold blue (#1d4ed8) or trophy gold (#fbbf24)
-
-### COLOR RULES:
-  - primaryColor: Keep original site color
-  - secondaryColor: Bold red (#dc2626)
-  - accentColor: Bold blue (#1d4ed8) or gold (#fbbf24)
-
-### CONTENT EXAMPLES:
-  - Product: "Championship Edition Pro Max Ultimate™"
-  - Announcement: "🏆 GAME DAY DEALS - IT'S GO TIME! 🏆"
-  - Fee: "Stadium Nachos Markup Applied: $7.99"
-  - Review: "AND THE CROWD GOES WILD! This product is a TOUCHDOWN!"
-  - Urgency: "⏱️ FINAL QUARTER! Deals end when the buzzer sounds!"
-`,
-
-  sensual: `
-## THEME OVERLAY: SENSUAL 💋
-
-THIS THEME MUST BE UNMISTAKABLY VISIBLE. Sophisticated, mysterious, luxurious.
-
-### MANDATORY REQUIREMENTS (you MUST include ALL of these):
-1. Deep, rich color palette - reds, blacks, golds
-2. Language must be sophisticated and suggestive: "exclusive", "intimate", "for discerning tastes"
-3. At least 2 "Members Only" or "Private Collection" references
-4. Reviews that read like wine descriptions: "Notes of satisfaction with a lingering finish"
-5. Use emojis sparingly but impactfully: 💋✨🖤 (max 3-4 total)
-6. Fees with luxury framing: "Discretion Fee", "White Glove Handling"
-7. accentColor MUST be deep red (#991b1b) or gold (#fbbf24)
-
-### COLOR RULES:
-  - primaryColor: Keep original site color (but darken if originally light)
-  - secondaryColor: Black (#1f1f1f)
-  - accentColor: Deep red (#991b1b) or gold (#fbbf24)
-
-### CONTENT EXAMPLES:
-  - Product: "The Private Reserve Collection™"
-  - Announcement: "✨ For Those Who Know... (VIP Access) ✨"
-  - Fee: "Discretion Assurance Fee: $9.99"
-  - Review: "This product understands me in ways others simply cannot."
-  - Urgency: "💋 Exclusive access closing soon. Are you in?"
-`,
-
-  retro: `
-## THEME OVERLAY: RETRO 📺
-
-THIS THEME MUST BE UNMISTAKABLY VISIBLE. Full 90s infomercial energy!
-
-### MANDATORY REQUIREMENTS (you MUST include ALL of these):
-1. At least 2 "BUT WAIT, THERE'S MORE!" moments in product descriptions
-2. Infomercial pricing: "$19.99! (+ $19.99 S&H) (+ $9.99 processing)"
-3. "Call NOW!" and "Operators standing by!" language in urgency messages
-4. Reviews that sound like testimonials: "I was skeptical, but then..."
-5. Use retro emojis: 📺📼💾🕹️📞 (at least 5 total)
-6. "As Seen On TV!" badges on products
-7. accentColor MUST be orange (#ea580c) or brown (#854d0e)
-
-### COLOR RULES:
-  - primaryColor: Keep original site color
-  - secondaryColor: Brown (#854d0e)
-  - accentColor: Orange (#ea580c) or cream (#fef08a)
-
-### CONTENT EXAMPLES:
-  - Product: "The Miracle Mega-Saver 3000™"
-  - Announcement: "📺 AS SEEN ON TV! NOW AVAILABLE ONLINE! 📺"
-  - Pricing: "JUST 3 EASY PAYMENTS OF $19.99! 💰"
-  - Review: "I was skeptical, but then I called the number and my life changed!"
-  - Urgency: "📞 CALL NOW! Operators are standing by! (We have so many operators)"
-  - Fee: "Shipping & Handling: $9.99 | Additional Handling: $4.99 | Extra Handling for the Handling: $2.99"
-`,
+  default: '',
 }
 
 const COLOR_BLENDING_RULES = `
@@ -857,7 +605,7 @@ Return ONLY this JSON:
 function buildPrompt(
   url: string,
   analysis?: SiteAnalysis | null,
-  tone: string = 'negative',
+  tone: string = 'standard',
   theme: string = 'default'
 ): string {
   // Layer 2: Brand Identity from Analysis
@@ -886,11 +634,12 @@ The humor should make users think "this is too real" not "this is random nonsens
 
 ` : ''
 
-  // Layer 3: Tone Instructions
-  const toneSection = TONE_INSTRUCTIONS[tone] || TONE_INSTRUCTIONS.negative
+  // Layer 3: Tone Instructions (map legacy tones to new system)
+  const toneKey = ['positive', 'negative', 'balanced'].includes(tone) ? 'standard' : tone
+  const toneSection = TONE_INSTRUCTIONS[toneKey] || TONE_INSTRUCTIONS.standard
 
-  // Layer 4: Theme Instructions
-  const themeSection = theme !== 'default' ? (THEME_INSTRUCTIONS[theme] || '') : ''
+  // Layer 4: Theme Instructions (no longer used, kept for backward compat)
+  const themeSection = ''
 
   return `You are a master satirist creating a parody of: ${url}
 
@@ -1036,7 +785,7 @@ function buildRetryPrompt(
   url: string,
   issues: string[],
   analysis?: SiteAnalysis | null,
-  tone: string = 'negative',
+  tone: string = 'standard',
   theme: string = 'default'
 ): string {
   return `You are a master satirist creating a parody of: ${url}
@@ -1069,7 +818,7 @@ const handler: Handler = async (event) => {
     const body = JSON.parse(event.body || '{}')
     parodyId = body.parodyId
     const url = body.url
-    const tone = body.tone || 'negative'
+    const tone = body.tone || 'standard'
     const theme = body.theme || 'default'
 
     if (!parodyId || !url) {

@@ -12,7 +12,8 @@ import { getActiveGenerations, incrementActiveGenerations } from './lib/cache'
 import { verifyAuth, getHeaders, unauthorizedResponse } from './lib/auth'
 
 // Valid tones and themes for input validation
-const VALID_TONES = ['positive', 'negative', 'balanced', 'erotic'] as const
+// Includes legacy values for backward compat with existing parodies
+const VALID_TONES = ['standard', 'erotic', 'dark', 'positive', 'negative', 'balanced'] as const
 const VALID_THEMES = ['default', 'christmas', 'easter', 'sport', 'sensual', 'retro'] as const
 
 const handler: Handler = async (event) => {
@@ -47,7 +48,7 @@ const handler: Handler = async (event) => {
     const sql = neon(process.env.DATABASE_URL!)
 
     // Parse request body
-    const { url, tone = 'negative', theme = 'default', testKey } = JSON.parse(event.body || '{}')
+    const { url, tone = 'standard', theme = 'default', testKey } = JSON.parse(event.body || '{}')
 
     // Test mode bypass - only works with valid TEST_BYPASS_KEY env var
     const hasTestKey = !!process.env.TEST_BYPASS_KEY

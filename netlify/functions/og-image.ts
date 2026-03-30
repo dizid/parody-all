@@ -48,12 +48,15 @@ const handler: Handler = async (event) => {
 
     // Tone badge
     const toneBadges: Record<string, { label: string; color: string }> = {
-      negative: { label: 'ROAST', color: '#ef4444' },
-      positive: { label: 'UTOPIA', color: '#22c55e' },
-      balanced: { label: 'BALANCED', color: '#6b7280' },
+      standard: { label: 'ROAST', color: '#7c3aed' },
       erotic: { label: 'SPICY', color: '#be185d' },
+      dark: { label: 'DARK', color: '#1f2937' },
+      // Legacy tones
+      negative: { label: 'ROAST', color: '#7c3aed' },
+      positive: { label: 'ROAST', color: '#7c3aed' },
+      balanced: { label: 'ROAST', color: '#7c3aed' },
     }
-    const badge = toneBadges[parody.tone] || toneBadges.negative
+    const badge = toneBadges[parody.tone] || toneBadges.standard
 
     // Site type icon
     const siteIcons: Record<string, string> = {

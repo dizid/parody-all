@@ -5,8 +5,6 @@ import { useAuth } from '../composables/useAuth'
 import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
 import {
   PRICING_TIERS,
-  PARODY_TONES,
-  PARODY_THEMES,
   type AnalysisResult,
   type SiteType,
   type ParodyTone,
@@ -30,8 +28,8 @@ const analysisResult = ref<AnalysisResult | null>(null)
 const error = ref('')
 const animatedCount = ref(0)
 
-// Customization options
-const selectedTone = ref<ParodyTone>('negative')
+// Style modifier — standard is default, erotic and dark are optional
+const selectedTone = ref<ParodyTone>('standard')
 const selectedTheme = ref<ParodyTheme>('default')
 
 // Animated counter on mount
@@ -171,28 +169,6 @@ function scrollToTop() {
 }
 
 // Tone helper functions for UI styling
-function getToneSelectedClass(tone: ParodyTone): string {
-  const classes: Record<ParodyTone, string> = {
-    negative: 'border-red-500 bg-red-50 ring-2 ring-red-200',
-    positive: 'border-green-500 bg-green-50 ring-2 ring-green-200',
-    balanced: 'border-gray-500 bg-gray-50 ring-2 ring-gray-200',
-    erotic: 'border-pink-500 bg-pink-50 ring-2 ring-pink-200',
-  }
-  return classes[tone]
-}
-
-// Theme helper functions for UI styling
-function getThemeSelectedClass(theme: ParodyTheme): string {
-  const classes: Record<ParodyTheme, string> = {
-    default: 'border-purple-500 bg-purple-50 ring-2 ring-purple-200',
-    christmas: 'border-red-500 bg-red-50 ring-2 ring-red-200',
-    easter: 'border-pink-400 bg-pink-50 ring-2 ring-pink-200',
-    sport: 'border-blue-500 bg-blue-50 ring-2 ring-blue-200',
-    sensual: 'border-rose-500 bg-rose-50 ring-2 ring-rose-200',
-    retro: 'border-orange-500 bg-orange-50 ring-2 ring-orange-200',
-  }
-  return classes[theme]
-}
 
 </script>
 
@@ -329,40 +305,37 @@ function getThemeSelectedClass(theme: ParodyTheme): string {
               </div>
             </div>
 
-            <!-- Customization Section -->
-            <div class="border-t border-gray-100 pt-4 mt-4 mb-6 space-y-4">
-              <!-- Tone Selector -->
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-2">Tone</label>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="(config, tone) in PARODY_TONES"
-                    :key="tone"
-                    @click="selectedTone = tone as ParodyTone"
-                    class="px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 text-sm"
-                    :class="selectedTone === tone ? getToneSelectedClass(tone as ParodyTone) : 'border-gray-200 hover:border-gray-300 bg-white'"
-                  >
-                    <span class="text-sm">{{ config.icon }}</span>
-                    <span>{{ config.label }}</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Theme Selector -->
-              <div>
-                <label class="block text-xs font-medium text-gray-500 mb-2">Theme</label>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="(config, theme) in PARODY_THEMES"
-                    :key="theme"
-                    @click="selectedTheme = theme as ParodyTheme"
-                    class="px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 text-sm"
-                    :class="selectedTheme === theme ? getThemeSelectedClass(theme as ParodyTheme) : 'border-gray-200 hover:border-gray-300 bg-white'"
-                  >
-                    <span class="text-sm">{{ config.icon }}</span>
-                    <span>{{ config.label }}</span>
-                  </button>
-                </div>
+            <!-- Style Modifier -->
+            <div class="border-t border-gray-100 pt-4 mt-4 mb-6">
+              <label class="block text-xs font-medium text-gray-500 mb-2">Style</label>
+              <div class="flex gap-2">
+                <button
+                  @click="selectedTone = 'standard'"
+                  class="px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium"
+                  :class="selectedTone === 'standard'
+                    ? 'border-purple-500 bg-purple-50 text-purple-700 ring-2 ring-purple-200'
+                    : 'border-gray-200 hover:border-gray-300 bg-white text-gray-600'"
+                >
+                  <span>🎭</span> Standard
+                </button>
+                <button
+                  @click="selectedTone = 'erotic'"
+                  class="px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium"
+                  :class="selectedTone === 'erotic'
+                    ? 'border-pink-500 bg-pink-50 text-pink-700 ring-2 ring-pink-200'
+                    : 'border-gray-200 hover:border-gray-300 bg-white text-gray-600'"
+                >
+                  <span>🔥</span> Sexy
+                </button>
+                <button
+                  @click="selectedTone = 'dark'"
+                  class="px-4 py-2 rounded-lg border transition-all flex items-center gap-2 text-sm font-medium"
+                  :class="selectedTone === 'dark'
+                    ? 'border-gray-700 bg-gray-900 text-white ring-2 ring-gray-500'
+                    : 'border-gray-200 hover:border-gray-300 bg-white text-gray-600'"
+                >
+                  <span>💀</span> Dark
+                </button>
               </div>
             </div>
 

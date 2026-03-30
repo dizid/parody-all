@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
-import type { Parody, ParodyData, ParodyConfig, Product, ParodyTheme, ParodyTone } from '../types'
+import type { Parody, ParodyData, ParodyConfig, Product } from '../types'
 import { useParodyInteractions } from '../composables/useParodyInteractions'
 import ParodyBacklink from '../components/ParodyBacklink.vue'
 import ParodyHeader from '../components/parody/ParodyHeader.vue'
@@ -85,8 +85,8 @@ const cartSubtotal = computed(() =>
   cartItems.value.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
 )
 
-// Theme-specific CSS variables
-const themeColors: Record<ParodyTheme, { accent: string; secondary: string; glow: string }> = {
+// Theme-specific CSS variables (kept for backward compat with old parodies)
+const themeColors: Record<string, { accent: string; secondary: string; glow: string }> = {
   default: { accent: '#7c3aed', secondary: '#ec4899', glow: 'rgba(124, 58, 237, 0.3)' },
   christmas: { accent: '#dc2626', secondary: '#16a34a', glow: 'rgba(220, 38, 38, 0.3)' },
   easter: { accent: '#ec4899', secondary: '#a855f7', glow: 'rgba(236, 72, 153, 0.3)' },
@@ -95,26 +95,29 @@ const themeColors: Record<ParodyTheme, { accent: string; secondary: string; glow
   retro: { accent: '#ea580c', secondary: '#854d0e', glow: 'rgba(234, 88, 12, 0.3)' },
 }
 
-// Tone-specific visual styles
-const toneStyles: Record<ParodyTone, { badge: string; cardShadow: string; bgTint: string }> = {
-  negative: { badge: '#ef4444', cardShadow: 'rgba(239, 68, 68, 0.2)', bgTint: 'rgba(127, 29, 29, 0.03)' },
-  positive: { badge: '#22c55e', cardShadow: 'rgba(34, 197, 94, 0.2)', bgTint: 'rgba(34, 197, 94, 0.03)' },
-  balanced: { badge: '#6b7280', cardShadow: 'rgba(107, 114, 128, 0.15)', bgTint: 'rgba(107, 114, 128, 0.02)' },
+// Tone-specific visual styles (new + legacy mapped)
+const toneStyles: Record<string, { badge: string; cardShadow: string; bgTint: string }> = {
+  standard: { badge: '#7c3aed', cardShadow: 'rgba(124, 58, 237, 0.2)', bgTint: 'rgba(124, 58, 237, 0.03)' },
   erotic: { badge: '#be185d', cardShadow: 'rgba(190, 24, 93, 0.2)', bgTint: 'rgba(190, 24, 93, 0.03)' },
+  dark: { badge: '#1f2937', cardShadow: 'rgba(31, 41, 55, 0.25)', bgTint: 'rgba(0, 0, 0, 0.04)' },
+  // Legacy tones map to standard
+  negative: { badge: '#7c3aed', cardShadow: 'rgba(124, 58, 237, 0.2)', bgTint: 'rgba(124, 58, 237, 0.03)' },
+  positive: { badge: '#7c3aed', cardShadow: 'rgba(124, 58, 237, 0.2)', bgTint: 'rgba(124, 58, 237, 0.03)' },
+  balanced: { badge: '#7c3aed', cardShadow: 'rgba(124, 58, 237, 0.2)', bgTint: 'rgba(124, 58, 237, 0.03)' },
 }
 
 const themeStyles = computed(() => {
-  const theme = (parody.value?.theme as ParodyTheme) || 'default'
-  const colors = themeColors[theme] || themeColors.default
-  const tone = (parody.value?.tone as ParodyTone) || 'negative'
-  const toneConfig = toneStyles[tone] || toneStyles.negative
+  const theme = parody.value?.theme || 'default'
+  const colors = themeColors[theme] ?? themeColors.default
+  const tone = parody.value?.tone || 'standard'
+  const toneConfig = toneStyles[tone] ?? toneStyles.standard
   return {
-    '--theme-accent': colors.accent,
-    '--theme-secondary': colors.secondary,
-    '--theme-glow': colors.glow,
-    '--tone-badge': toneConfig.badge,
-    '--tone-card-shadow': toneConfig.cardShadow,
-    '--tone-bg-tint': toneConfig.bgTint,
+    '--theme-accent': colors!.accent,
+    '--theme-secondary': colors!.secondary,
+    '--theme-glow': colors!.glow,
+    '--tone-badge': toneConfig!.badge,
+    '--tone-card-shadow': toneConfig!.cardShadow,
+    '--tone-bg-tint': toneConfig!.bgTint,
   }
 })
 

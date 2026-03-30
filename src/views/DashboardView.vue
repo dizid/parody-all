@@ -3,7 +3,7 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { useUser, useAuth as useClerkAuth } from '@clerk/vue'
-import { PRICING_TIERS, PARODY_TONES, PARODY_THEMES, type Parody } from '../types'
+import { PRICING_TIERS, type Parody } from '../types'
 
 interface Profile {
   id: string
@@ -451,11 +451,10 @@ function getStatusBadge(status: string) {
               <p class="text-xs" style="color: var(--color-text-secondary); opacity: 0.7;">
                 {{ new Date(parody.created_at).toLocaleDateString() }}
               </p>
-              <span v-if="parody.tone" class="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                {{ PARODY_TONES[parody.tone]?.icon }} {{ PARODY_TONES[parody.tone]?.label || parody.tone }}
-              </span>
-              <span v-if="parody.theme && parody.theme !== 'default'" class="text-xs px-2 py-0.5 rounded-full bg-pink-100 text-pink-700">
-                {{ PARODY_THEMES[parody.theme]?.icon }} {{ PARODY_THEMES[parody.theme]?.label || parody.theme }}
+              <span v-if="parody.tone && !['standard', 'negative', 'positive', 'balanced'].includes(parody.tone)" class="text-xs px-2 py-0.5 rounded-full"
+                :class="parody.tone === 'dark' ? 'bg-gray-800 text-white' : 'bg-pink-100 text-pink-700'"
+              >
+                {{ parody.tone === 'erotic' ? '🔥 Sexy' : parody.tone === 'dark' ? '💀 Dark' : parody.tone }}
               </span>
             </div>
           </div>

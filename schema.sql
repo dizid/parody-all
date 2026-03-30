@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS parodies (
   expires_at TIMESTAMP WITH TIME ZONE,
   backlink_size TEXT DEFAULT 'large' CHECK (backlink_size IN ('large', 'small', 'none')),
   creator_url TEXT,
-  tone TEXT DEFAULT 'negative' CHECK (tone IN ('positive', 'negative', 'balanced', 'erotic')),
+  tone TEXT DEFAULT 'standard' CHECK (tone IN ('standard', 'erotic', 'dark', 'positive', 'negative', 'balanced')),
   theme TEXT DEFAULT 'default' CHECK (theme IN ('default', 'christmas', 'easter', 'sport', 'sensual', 'retro')),
   notification_email TEXT,
   error_message TEXT,
