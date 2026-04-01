@@ -89,6 +89,8 @@ const handler: Handler = async (event) => {
         user_id: userId,
         price_id: priceId,
         tier: tier || 'single',
+        plugaff_ref: (event.headers.cookie || '').match(/plugaff_ref=([^;]+)/)?.[1] || '',
+        plugaff_app: 'parody',
       },
       // For subscriptions, also add metadata to the subscription
       ...(isSubscription && {
