@@ -7,6 +7,13 @@ import { isClaudeAPIDisabled, getKillSwitches, budgetExceededResponse } from './
 import { checkBudget, recordUsage } from './lib/budget'
 import { decrementActiveGenerations } from './lib/cache'
 
+// Auth: shared secret so this endpoint can't be hit directly from the public
+// internet to trigger free Claude calls — it must only be invoked by
+// generate-parody.ts / regenerate-parody.ts, which have already run the real
+// Clerk auth + rate-limit + tier-limit checks. Same pattern as clientpilot's
+// generate-background.mts.
+const INTERNAL_SECRET = process.env.INTERNAL_FUNCTION_SECRET
+
 // Minimum required content per site type
 const REQUIRED_CONTENT = {
   ecommerce: { products: 4, fees: 3 },
@@ -807,6 +814,12 @@ const handler: Handler = async (event) => {
 
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method not allowed' }
+  }
+
+  const secret = event.headers['x-internal-secret']
+  if (!INTERNAL_SECRET || secret !== INTERNAL_SECRET) {
+    console.error('generate-parody-background: missing or invalid internal secret')
+    return { statusCode: 403, body: 'Forbidden' }
   }
 
   const sql = neon(process.env.DATABASE_URL!)

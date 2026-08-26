@@ -16,6 +16,10 @@ import { verifyAuth, getHeaders, unauthorizedResponse } from './lib/auth'
 const VALID_TONES = ['standard', 'erotic', 'dark', 'positive', 'negative', 'balanced'] as const
 const VALID_THEMES = ['default', 'christmas', 'easter', 'sport', 'sensual', 'retro'] as const
 
+// Shared secret required by generate-parody-background.ts so it can't be
+// triggered directly from the public internet.
+const INTERNAL_SECRET = process.env.INTERNAL_FUNCTION_SECRET
+
 const handler: Handler = async (event) => {
   const headers = getHeaders(event.headers.origin)
 
@@ -196,6 +200,20 @@ const handler: Handler = async (event) => {
     const backgroundUrl = `${siteUrl}/.netlify/functions/generate-parody-background`
     console.log(`Invoking background function at: ${backgroundUrl}`)
 
+    if (!INTERNAL_SECRET) {
+      console.error('INTERNAL_FUNCTION_SECRET not configured')
+      await sql`
+        UPDATE parodies
+        SET status = 'failed', error_message = 'Server misconfiguration. Please try again later.'
+        WHERE id = ${parody.id}
+      `
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: 'Server misconfiguration' }),
+      }
+    }
+
     // Use a timeout to ensure we don't wait forever for the background function to acknowledge
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout for initial response
@@ -203,7 +221,7 @@ const handler: Handler = async (event) => {
     try {
       const bgResponse = await fetch(backgroundUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_SECRET },
         body: JSON.stringify({ parodyId: parody.id, url, tone, theme }),
         signal: controller.signal,
       })

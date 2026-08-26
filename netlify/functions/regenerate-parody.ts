@@ -2,6 +2,10 @@ import type { Handler } from '@netlify/functions'
 import { neon } from '@neondatabase/serverless'
 import { verifyAuth, getHeaders, unauthorizedResponse } from './lib/auth'
 
+// Shared secret required by generate-parody-background.ts so it can't be
+// triggered directly from the public internet.
+const INTERNAL_SECRET = process.env.INTERNAL_FUNCTION_SECRET
+
 const handler: Handler = async (event) => {
   const headers = getHeaders(event.headers.origin)
 
@@ -62,10 +66,20 @@ const handler: Handler = async (event) => {
     `
 
     // Invoke background generation
+    if (!INTERNAL_SECRET) {
+      console.error('INTERNAL_FUNCTION_SECRET not configured')
+      await sql`
+        UPDATE parodies
+        SET status = 'failed', error_message = 'Server misconfiguration. Please try again later.'
+        WHERE id = ${parodyId}
+      `
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server misconfiguration' }) }
+    }
+
     const siteUrl = process.env.URL || 'http://localhost:8888'
     fetch(`${siteUrl}/.netlify/functions/generate-parody-background`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-internal-secret': INTERNAL_SECRET },
       body: JSON.stringify({
         parodyId: parody.id,
         url: parody.original_url,
